@@ -31,17 +31,30 @@ def get_food_titles():
             connection.close()
 
 
-def get_recommendations():
+def get_recommendations(title_name):
     connection = psycopg2.connect(**db_params)
     cursor = connection.cursor()
 
     try:
-        cursor.execute("SELECT id, name FROM recommendations")
-        recommendations_data = cursor.fetchall()
-        recommendations_dict = {data[0]: data[1] for data in recommendations_data}
+        cursor.execute("SELECT title, id, name FROM recommendations WHERE title = %s", (title_name,))
 
-        return recommendations_dict
+        rows = cursor.fetchall()
 
+        result_dict = {}
+
+        for row in rows:
+            title = row[0]
+            id = row[1]
+            name = row[2]
+
+            if title not in result_dict:
+                result_dict[title] = []
+
+            result_dict[title].append({'id': id, 'name': name})
+
+        for key in result_dict:
+            result_dict[key] = sorted(result_dict[key], key=lambda x: x['id'])
+        return result_dict
     except (Exception, psycopg2.Error) as error:
         print("Ошибка при работе с PostgreSQL", error)
 

@@ -10,7 +10,12 @@ class Config(object):
     """Project main config"""
     TOKEN = os.environ.get('TOKEN')
     NEW_CLIENT = {}
-    RECOMMENDATIONS_CHOICES = []
+    RECOMMENDATIONS_CHOICES_1 = []
+    RECOMMENDATIONS_CHOICES_2 = []
+    RECOMMENDATIONS_CHOICES_3 = []
+    RECOMMENDATIONS_CHOICES_4 = []
+    RECOMMENDATIONS_CHOICES_5 = []
+    RECOMMENDATIONS_CHOICES_6 = []
     CLIENT_ID_TO_DELETE = ''
 
     DB_NAME = os.environ.get('DB_NAME')
