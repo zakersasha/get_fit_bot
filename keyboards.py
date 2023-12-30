@@ -215,6 +215,14 @@ def get_clients_list_keyboard_rec():
     return keyboard
 
 
+def get_clients_list_keyboard_menu():
+    keyboard = InlineKeyboardMarkup()
+    clients = get_clients_data()
+    for client in clients:
+        keyboard.add(InlineKeyboardButton(client['full_name'], callback_data=f'menu_clients_{str(client["id"])}'))
+    return keyboard
+
+
 def get_clients_settings_keyboard():
     keyboard = InlineKeyboardMarkup(row_width=1)
     btn_edit = InlineKeyboardButton('Редактировать данные клиента', callback_data='edit_client')

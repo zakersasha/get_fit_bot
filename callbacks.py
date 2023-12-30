@@ -3,14 +3,17 @@ from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
+from config import Config
 from db import get_protocol_by_id, get_recommendations_by_ids, save_new_client, get_client_by_id, delete_client_by_id, \
-    get_recommendations, update_user_recommendations
+    get_recommendations, update_user_recommendations, get_food_protocols_by_id
 from keyboards import get_clients_keyboard, get_clients_list_keyboard, \
     get_clients_settings_keyboard, get_remove_question_keyboard, get_start_keyboard, recommendations_keyboard_1, \
     recommendations_keyboard_2, recommendations_keyboard_3, recommendations_keyboard_4, recommendations_keyboard_5, \
     recommendations_keyboard_6, get_clients_list_keyboard_rec, get_set_recommendations_keyboard, \
     recommendation_edit_keyboard_1, recommendation_edit_keyboard_2, recommendation_edit_keyboard_3, \
-    recommendation_edit_keyboard_4, recommendation_edit_keyboard_5, recommendation_edit_keyboard_6
+    recommendation_edit_keyboard_4, recommendation_edit_keyboard_5, recommendation_edit_keyboard_6, \
+    get_clients_list_keyboard_menu
+from utils import make_gpt_request
 
 
 class FormStates(StatesGroup):
@@ -39,6 +42,10 @@ class ClientFindChoice(StatesGroup):
     choosing_user = State()
 
 
+class ClientMenuChoice(StatesGroup):
+    choosing_user = State()
+
+
 class ClientMakeRecommendationsChoice(StatesGroup):
     choosing_user = State()
 
@@ -49,11 +56,37 @@ async def process_start_callback_clients(call: types.CallbackQuery):
 
 async def process_start_callback_menu(call: types.CallbackQuery):
     await call.message.edit_text('📝 Формируем меню.')
+    await call.message.answer('Выберите клиента', reply_markup=get_clients_list_keyboard_menu())
 
 
 async def process_start_callback_recommendations(call: types.CallbackQuery):
     await call.message.edit_text('💬 Формируем рекоммендации.')
     await call.message.answer('Выберите клиента', reply_markup=get_clients_list_keyboard_rec())
+
+
+async def process_client_add_menu(call: types.CallbackQuery, state=None):
+    client_data = get_client_by_id(int(call.data.replace('menu_clients_', '')))
+    await ClientMenuChoice.choosing_user.set()
+    await state.update_data(chosen_user=client_data)
+
+    if client_data['food_protocol_id'] is None:
+        await call.message.answer('❗️ У пользователя не заполнен протокол питания ❗️')
+        await state.finish()
+        await call.message.answer('Выберите клиента', reply_markup=get_clients_list_keyboard_menu())
+
+    else:
+        if client_data['allergic'] in Config.NO_ANSWER:
+            print('запрос без алергии')
+            print(client_data)
+            await state.finish()
+            # food_data = get_food_protocols_by_id(client_data['food_protocol_id'])
+            # await make_gpt_request(food_data, None)
+        else:
+            print('запрос c алергией')
+            print(client_data)
+            await state.finish()
+            # food_data = get_food_protocols_by_id(client_data['food_protocol_id'])
+            # await make_gpt_request(food_data, client_data['allergic'])
 
 
 async def process_client_add_rec(call: types.CallbackQuery, state=None):
@@ -560,7 +593,7 @@ def register_callbacks(dp: Dispatcher):
     """Register bot callbacks and triggers."""
     # Start
     dp.register_callback_query_handler(process_start_callback_clients, lambda c: c.data == 'clients')
-    dp.register_callback_query_handler(process_start_callback_clients, lambda c: c.data == 'menu')
+    dp.register_callback_query_handler(process_start_callback_menu, lambda c: c.data == 'menu')
     dp.register_callback_query_handler(process_start_callback_recommendations, lambda c: c.data == 'recommendations')
 
     dp.register_callback_query_handler(process_client_add_rec, lambda c: c.data.startswith('clients_rec_'))
@@ -568,6 +601,8 @@ def register_callbacks(dp: Dispatcher):
                                        state='*')
     dp.register_callback_query_handler(process_client_back, lambda c: c.data == 'back',
                                        state=ClientMakeRecommendationsChoice.choosing_user)
+
+    dp.register_callback_query_handler(process_client_add_menu, lambda c: c.data.startswith('menu_clients_'))
 
     # Clients
     dp.register_callback_query_handler(process_clients_callback_add, lambda c: c.data == 'add_client')

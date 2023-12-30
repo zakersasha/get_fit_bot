@@ -239,3 +239,24 @@ def update_user_recommendations(user_id, recommendations_ids, recommendations):
         if connection:
             cursor.close()
             connection.close()
+
+
+def get_food_protocols_by_id(food_id):
+    connection = psycopg2.connect(**db_params)
+    cursor = connection.cursor()
+    try:
+        query = "SELECT allowed, not_allowed FROM food_protocols WHERE id = %s"
+
+        cursor.execute(query, (food_id,))
+        result = cursor.fetchone()
+        columns = ('allowed', 'not_allowed')
+        result_dict = dict(zip(columns, result))
+        return result_dict
+
+    except (Exception, psycopg2.Error) as error:
+        print("Ошибка при работе с PostgreSQL", error)
+
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
