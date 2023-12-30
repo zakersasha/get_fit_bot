@@ -217,3 +217,25 @@ def delete_client_by_id(id):
         if connection:
             cursor.close()
             connection.close()
+
+
+def update_user_recommendations(user_id, recommendations_ids, recommendations):
+    connection = psycopg2.connect(**db_params)
+    cursor = connection.cursor()
+
+    try:
+        sql = """
+                UPDATE clients
+                SET recommendations_ids = %s, recommendations = %s
+                WHERE id = %s
+            """
+        cursor.execute(sql, (recommendations_ids, recommendations, user_id))
+        connection.commit()
+
+    except (Exception, psycopg2.Error) as error:
+        print("Ошибка при работе с PostgreSQL", error)
+
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()

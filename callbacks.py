@@ -3,13 +3,14 @@ from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
-from config import Config
 from db import get_protocol_by_id, get_recommendations_by_ids, save_new_client, get_client_by_id, delete_client_by_id, \
-    get_recommendations
+    get_recommendations, update_user_recommendations
 from keyboards import get_clients_keyboard, get_clients_list_keyboard, \
     get_clients_settings_keyboard, get_remove_question_keyboard, get_start_keyboard, recommendations_keyboard_1, \
     recommendations_keyboard_2, recommendations_keyboard_3, recommendations_keyboard_4, recommendations_keyboard_5, \
-    recommendations_keyboard_6
+    recommendations_keyboard_6, get_clients_list_keyboard_rec, get_set_recommendations_keyboard, \
+    recommendation_edit_keyboard_1, recommendation_edit_keyboard_2, recommendation_edit_keyboard_3, \
+    recommendation_edit_keyboard_4, recommendation_edit_keyboard_5, recommendation_edit_keyboard_6
 
 
 class FormStates(StatesGroup):
@@ -25,7 +26,20 @@ class FormStates(StatesGroup):
     RECOMMENDATION_6 = State()
 
 
+class RecStates(StatesGroup):
+    REC_1 = State()
+    REC_2 = State()
+    REC_3 = State()
+    REC_4 = State()
+    REC_5 = State()
+    REC_6 = State()
+
+
 class ClientFindChoice(StatesGroup):
+    choosing_user = State()
+
+
+class ClientMakeRecommendationsChoice(StatesGroup):
     choosing_user = State()
 
 
@@ -39,6 +53,29 @@ async def process_start_callback_menu(call: types.CallbackQuery):
 
 async def process_start_callback_recommendations(call: types.CallbackQuery):
     await call.message.edit_text('💬 Формируем рекоммендации.')
+    await call.message.answer('Выберите клиента', reply_markup=get_clients_list_keyboard_rec())
+
+
+async def process_client_add_rec(call: types.CallbackQuery, state=None):
+    client_data = get_client_by_id(int(call.data.replace('clients_rec_', '')))
+
+    await ClientMakeRecommendationsChoice.choosing_user.set()
+    await state.update_data(chosen_user=client_data)
+
+    if client_data['recommendations'] is None:
+        await call.message.answer('Выберите действие:', reply_markup=get_set_recommendations_keyboard())
+
+    elif len(client_data['recommendations']) > 0:
+        str_recommendations = ";\n".join(client_data['recommendations']) + ";"
+        await call.message.edit_text(f'👤 Вы выбрали: {client_data["full_name"]}\n\n{str_recommendations}')
+        await state.finish()
+    else:
+        await call.message.answer('Выберите действие:', reply_markup=get_set_recommendations_keyboard())
+
+
+async def process_client_back(call: types.CallbackQuery, state: FSMContext):
+    await state.finish()
+    await call.message.answer('Выберите клиента:', reply_markup=get_clients_list_keyboard_rec())
 
 
 async def process_clients_callback_add(call: types.CallbackQuery):
@@ -308,12 +345,229 @@ async def process_save_recommendation_6(call: types.CallbackQuery, state: FSMCon
     await call.message.answer('Выберите действие:', reply_markup=get_start_keyboard())
 
 
+async def process_client_set_rec(call: types.CallbackQuery):
+    recommendations = get_recommendations(title_name='Работа со стрессом')
+    msg = ''
+    for i in recommendations['Работа со стрессом']:
+        msg += f'{str(i["id"])}. {i["name"]}\n'
+
+    await call.message.answer(text="Выберите рекомендации по <b>Работе со стрессом</b>:\n\n" + msg,
+                              reply_markup=recommendation_edit_keyboard_1([]))
+    await FormStates.RECOMMENDATION_1.set()
+
+
+async def process_choose_recommendation_1(call: types.CallbackQuery, state: FSMContext):
+    state_data = await state.get_data()
+    my_list = state_data.get("REC_1", [])
+    option = call.data.replace('edit_rec_1_', '')
+
+    if option in my_list:
+        my_list.remove(option)
+    else:
+        my_list.append(option)
+
+    await state.update_data(REC_1=my_list)
+    await call.message.edit_reply_markup(reply_markup=recommendation_edit_keyboard_1(my_list))
+
+
+async def process_edit_recommendation_1(call: types.CallbackQuery, state: FSMContext):
+    state_data = await state.get_data()
+    try:
+        await state.update_data(REC_1=list(map(int, state_data['REC_1'])))
+    except KeyError:
+        await state.update_data(REC_1=[])
+
+    recommendations = get_recommendations(title_name='Витамины')
+    msg = ''
+    for i in recommendations['Витамины']:
+        msg += f'{i["id"]}. {i["name"]}\n'
+
+    await call.message.answer(text="Выберите рекомендации по <b>Витаминам</b>:\n\n" + msg,
+                              reply_markup=recommendation_edit_keyboard_2([]))
+    await FormStates.RECOMMENDATION_2.set()
+
+
+async def process_choose_recommendation_2(call: types.CallbackQuery, state: FSMContext):
+    state_data = await state.get_data()
+    my_list = state_data.get("REC_2", [])
+    option = call.data.replace('edit_rec_2_', '')
+
+    if option in my_list:
+        my_list.remove(option)
+    else:
+        my_list.append(option)
+
+    await state.update_data(REC_2=my_list)
+
+    await call.message.edit_reply_markup(reply_markup=recommendation_edit_keyboard_2(my_list))
+
+
+async def process_edit_recommendation_2(call: types.CallbackQuery, state: FSMContext):
+    state_data = await state.get_data()
+
+    try:
+        await state.update_data(REC_2=list(map(int, state_data['REC_2'])))
+    except KeyError:
+        await state.update_data(REC_2=[])
+
+    recommendations = get_recommendations(title_name='Режим дня и сон')
+    msg = ''
+    for i in recommendations['Режим дня и сон']:
+        msg += f'{i["id"]}. {i["name"]}\n'
+
+    await call.message.answer(text="Выберите рекомендации по <b>Режим дня и сон</b>:\n\n" + msg,
+                              reply_markup=recommendation_edit_keyboard_3([]))
+    await FormStates.RECOMMENDATION_3.set()
+
+
+async def process_choose_recommendation_3(call: types.CallbackQuery, state: FSMContext):
+    state_data = await state.get_data()
+    my_list = state_data.get("REC_3", [])
+    option = call.data.replace('edit_rec_3_', '')
+
+    if option in my_list:
+        my_list.remove(option)
+    else:
+        my_list.append(option)
+
+    await state.update_data(REC_3=my_list)
+    await call.message.edit_reply_markup(reply_markup=recommendation_edit_keyboard_3(my_list))
+
+
+async def process_edit_recommendation_3(call: types.CallbackQuery, state: FSMContext):
+    state_data = await state.get_data()
+    try:
+        await state.update_data(REC_3=list(map(int, state_data['REC_3'])))
+    except KeyError:
+        await state.update_data(REC_3=[])
+
+    recommendations = get_recommendations(title_name='Активность')
+    msg = ''
+    for i in recommendations['Активность']:
+        msg += f'{i["id"]}. {i["name"]}\n'
+
+    await call.message.answer(text="Выберите рекомендации по <b>Активность</b>:\n\n" + msg,
+                              reply_markup=recommendation_edit_keyboard_4([]))
+    await FormStates.RECOMMENDATION_4.set()
+
+
+async def process_choose_recommendation_4(call: types.CallbackQuery, state: FSMContext):
+    state_data = await state.get_data()
+    my_list = state_data.get("REC_4", [])
+    option = call.data.replace('edit_rec_4_', '')
+
+    if option in my_list:
+        my_list.remove(option)
+    else:
+        my_list.append(option)
+
+    await state.update_data(REC_4=my_list)
+    await call.message.edit_reply_markup(reply_markup=recommendation_edit_keyboard_4(my_list))
+
+
+async def process_edit_recommendation_4(call: types.CallbackQuery, state: FSMContext):
+    state_data = await state.get_data()
+    try:
+        await state.update_data(REC_4=list(map(int, state_data['REC_4'])))
+    except KeyError:
+        await state.update_data(REC_4=[])
+
+    recommendations = get_recommendations(title_name='Слизистые')
+    msg = ''
+    for i in recommendations['Слизистые']:
+        msg += f'{i["id"]}. {i["name"]}\n'
+
+    await call.message.answer(text="Выберите рекомендации по <b>Слизистые</b>:\n\n" + msg,
+                              reply_markup=recommendation_edit_keyboard_5([]))
+    await FormStates.RECOMMENDATION_5.set()
+
+
+async def process_choose_recommendation_5(call: types.CallbackQuery, state: FSMContext):
+    state_data = await state.get_data()
+    my_list = state_data.get("REC_5", [])
+    option = call.data.replace('edit_rec_5_', '')
+
+    if option in my_list:
+        my_list.remove(option)
+    else:
+        my_list.append(option)
+
+    await state.update_data(REC_5=my_list)
+    await call.message.edit_reply_markup(reply_markup=recommendation_edit_keyboard_5(my_list))
+
+
+async def process_edit_recommendation_5(call: types.CallbackQuery, state: FSMContext):
+    state_data = await state.get_data()
+    try:
+        await state.update_data(REC_5=list(map(int, state_data['REC_5'])))
+    except KeyError:
+        await state.update_data(REC_5=[])
+
+    recommendations = get_recommendations(title_name='Кислотность и желчеотток')
+    msg = ''
+    for i in recommendations['Кислотность и желчеотток']:
+        msg += f'{i["id"]}. {i["name"]}\n'
+
+    await call.message.answer(text="Выберите рекомендации по <b>Кислотность и желчеотток</b>:\n\n" + msg,
+                              reply_markup=recommendation_edit_keyboard_6([]))
+    await FormStates.RECOMMENDATION_6.set()
+
+
+async def process_choose_recommendation_6(call: types.CallbackQuery, state: FSMContext):
+    state_data = await state.get_data()
+    my_list = state_data.get("REC_6", [])
+    option = call.data.replace('edit_rec_6_', '')
+
+    if option in my_list:
+        my_list.remove(option)
+    else:
+        my_list.append(option)
+
+    await state.update_data(REC_6=my_list)
+    await call.message.edit_reply_markup(reply_markup=recommendation_edit_keyboard_6(my_list))
+
+
+async def process_edit_recommendation_6(call: types.CallbackQuery, state: FSMContext):
+    state_data = await state.get_data()
+
+    try:
+        await state.update_data(REC_6=list(map(int, state_data['REC_6'])))
+    except KeyError:
+        await state.update_data(REC_6=[])
+
+    state_data = await state.get_data()
+    recommendation_ids = []
+    for key, value in state_data.items():
+        if isinstance(value, list):
+            recommendation_ids.extend(value)
+
+    recommendations = get_recommendations_by_ids(recommendation_ids)
+
+    update_user_recommendations(user_id=state_data["chosen_user"]["id"],
+                                recommendations=recommendations,
+                                recommendations_ids=recommendation_ids)
+
+    str_recommendations = ";\n".join(recommendations) + ";"
+    await call.message.edit_text(f'Рекомендации обновлены! \n'
+                                 f'ФИО: {state_data["chosen_user"]["full_name"]}\n\n'
+                                 f'Рекомендации: \n{str_recommendations}')
+
+    await state.finish()
+    await call.message.answer('Выберите действие:', reply_markup=get_start_keyboard())
+
+
 def register_callbacks(dp: Dispatcher):
     """Register bot callbacks and triggers."""
     # Start
     dp.register_callback_query_handler(process_start_callback_clients, lambda c: c.data == 'clients')
     dp.register_callback_query_handler(process_start_callback_clients, lambda c: c.data == 'menu')
-    dp.register_callback_query_handler(process_start_callback_clients, lambda c: c.data == 'recommendations')
+    dp.register_callback_query_handler(process_start_callback_recommendations, lambda c: c.data == 'recommendations')
+
+    dp.register_callback_query_handler(process_client_add_rec, lambda c: c.data.startswith('clients_rec_'))
+    dp.register_callback_query_handler(process_client_set_rec, lambda c: c.data == 'set_rec',
+                                       state='*')
+    dp.register_callback_query_handler(process_client_back, lambda c: c.data == 'back',
+                                       state=ClientMakeRecommendationsChoice.choosing_user)
 
     # Clients
     dp.register_callback_query_handler(process_clients_callback_add, lambda c: c.data == 'add_client')
@@ -335,32 +589,54 @@ def register_callbacks(dp: Dispatcher):
     dp.register_callback_query_handler(process_food_protocol, lambda c: c.data.startswith('protocol_'),
                                        state='*')
 
+    # Set recommendations
     dp.register_callback_query_handler(process_recommendation_1, lambda c: c.data.startswith('recommendation_1_'),
                                        state='*')
     dp.register_callback_query_handler(process_save_recommendation_1, lambda c: c.data == 'save_rec1',
                                        state='*')
-
     dp.register_callback_query_handler(process_recommendation_2, lambda c: c.data.startswith('recommendation_2_'),
                                        state='*')
     dp.register_callback_query_handler(process_save_recommendation_2, lambda c: c.data == 'save_rec2',
                                        state='*')
-
     dp.register_callback_query_handler(process_recommendation_3, lambda c: c.data.startswith('recommendation_3_'),
                                        state='*')
     dp.register_callback_query_handler(process_save_recommendation_3, lambda c: c.data == 'save_rec3',
                                        state='*')
-
     dp.register_callback_query_handler(process_recommendation_4, lambda c: c.data.startswith('recommendation_4_'),
                                        state='*')
     dp.register_callback_query_handler(process_save_recommendation_4, lambda c: c.data == 'save_rec4',
                                        state='*')
-
     dp.register_callback_query_handler(process_recommendation_5, lambda c: c.data.startswith('recommendation_5_'),
                                        state='*')
     dp.register_callback_query_handler(process_save_recommendation_5, lambda c: c.data == 'save_rec5',
                                        state='*')
-
     dp.register_callback_query_handler(process_recommendation_6, lambda c: c.data.startswith('recommendation_6_'),
                                        state='*')
     dp.register_callback_query_handler(process_save_recommendation_6, lambda c: c.data == 'save_client',
+                                       state='*')
+
+    # Edit recommendations
+    dp.register_callback_query_handler(process_choose_recommendation_1, lambda c: c.data.startswith('edit_rec_1_'),
+                                       state='*')
+    dp.register_callback_query_handler(process_edit_recommendation_1, lambda c: c.data == 'rec1_save',
+                                       state='*')
+    dp.register_callback_query_handler(process_choose_recommendation_2, lambda c: c.data.startswith('edit_rec_2_'),
+                                       state='*')
+    dp.register_callback_query_handler(process_edit_recommendation_2, lambda c: c.data == 'rec2_save',
+                                       state='*')
+    dp.register_callback_query_handler(process_choose_recommendation_3, lambda c: c.data.startswith('edit_rec_3_'),
+                                       state='*')
+    dp.register_callback_query_handler(process_edit_recommendation_3, lambda c: c.data == 'rec3_save',
+                                       state='*')
+    dp.register_callback_query_handler(process_choose_recommendation_4, lambda c: c.data.startswith('edit_rec_4_'),
+                                       state='*')
+    dp.register_callback_query_handler(process_edit_recommendation_4, lambda c: c.data == 'rec4_save',
+                                       state='*')
+    dp.register_callback_query_handler(process_choose_recommendation_5, lambda c: c.data.startswith('edit_rec_5_'),
+                                       state='*')
+    dp.register_callback_query_handler(process_edit_recommendation_5, lambda c: c.data == 'rec5_save',
+                                       state='*')
+    dp.register_callback_query_handler(process_choose_recommendation_6, lambda c: c.data.startswith('edit_rec_6_'),
+                                       state='*')
+    dp.register_callback_query_handler(process_edit_recommendation_6, lambda c: c.data == 'rec6_save',
                                        state='*')

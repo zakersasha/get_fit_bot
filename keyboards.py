@@ -197,6 +197,24 @@ def get_clients_list_keyboard():
     return keyboard
 
 
+def get_set_recommendations_keyboard():
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    btn_set = InlineKeyboardButton('Задать рекомендации', callback_data='set_rec')
+    btn_back = InlineKeyboardButton('Назад', callback_data='back')
+
+    keyboard.add(btn_set, btn_back)
+
+    return keyboard
+
+
+def get_clients_list_keyboard_rec():
+    keyboard = InlineKeyboardMarkup()
+    clients = get_clients_data()
+    for client in clients:
+        keyboard.add(InlineKeyboardButton(client['full_name'], callback_data=f'clients_rec_{str(client["id"])}'))
+    return keyboard
+
+
 def get_clients_settings_keyboard():
     keyboard = InlineKeyboardMarkup(row_width=1)
     btn_edit = InlineKeyboardButton('Редактировать данные клиента', callback_data='edit_client')
@@ -213,5 +231,161 @@ def get_remove_question_keyboard():
     btn_delete = InlineKeyboardButton('Нет', callback_data='removal_no')
 
     keyboard.add(btn_edit, btn_delete)
+
+    return keyboard
+
+
+def recommendation_edit_keyboard_1(user_data):
+    keyboard = InlineKeyboardMarkup(row_width=3)
+    recommendations = get_recommendations('Работа со стрессом')
+
+    on = '✅ '
+    off = '❌ '
+
+    buttons = []
+    for option in recommendations['Работа со стрессом']:
+        button_text = f"{on if str(option['id']) in user_data else off}{option['id']}"
+        button = InlineKeyboardButton(button_text, callback_data=f'edit_rec_1_{option["id"]}')
+        buttons.append(button)
+
+    column1 = buttons[:len(buttons) // 3]
+    column2 = buttons[len(buttons) // 3: 2 * len(buttons) // 3]
+    column3 = buttons[2 * len(buttons) // 3:]
+
+    for btn1, btn2, btn3 in zip(column1, column2, column3):
+        keyboard.add(btn1, btn2, btn3)
+
+    save_button = InlineKeyboardButton(text='Сохранить', callback_data='rec1_save')
+    keyboard.add(save_button)
+
+    return keyboard
+
+
+def recommendation_edit_keyboard_2(user_data):
+    keyboard = InlineKeyboardMarkup(row_width=3)
+    recommendations = get_recommendations('Витамины')
+
+    on = '✅ '
+    off = '❌ '
+
+    buttons = []
+    for option in recommendations['Витамины']:
+        button_text = f"{on if str(option['id']) in user_data else off}{option['id']}"
+        button = InlineKeyboardButton(button_text, callback_data=f'edit_rec_2_{option["id"]}')
+        keyboard.add(button)
+
+    column1 = buttons[:len(buttons) // 3]
+    column2 = buttons[len(buttons) // 3: 2 * len(buttons) // 3]
+    column3 = buttons[2 * len(buttons) // 3:]
+
+    for btn1, btn2, btn3 in zip(column1, column2, column3):
+        keyboard.add(btn1, btn2, btn3)
+
+    save_button = InlineKeyboardButton(text='Сохранить', callback_data='rec2_save')
+    keyboard.add(save_button)
+
+    return keyboard
+
+
+def recommendation_edit_keyboard_3(user_data):
+    keyboard = InlineKeyboardMarkup(row_width=3)
+    recommendations = get_recommendations('Режим дня и сон')
+
+    on = '✅ '
+    off = '❌ '
+
+    buttons = []
+    for option in recommendations['Режим дня и сон']:
+        button_text = f"{on if str(option['id']) in user_data else off}{option['id']}"
+        button = InlineKeyboardButton(button_text, callback_data=f'edit_rec_3_{option["id"]}')
+        keyboard.add(button)
+
+    column1 = buttons[:len(buttons) // 3]
+    column2 = buttons[len(buttons) // 3: 2 * len(buttons) // 3]
+    column3 = buttons[2 * len(buttons) // 3:]
+
+    for btn1, btn2, btn3 in zip(column1, column2, column3):
+        keyboard.add(btn1, btn2, btn3)
+
+    save_button = InlineKeyboardButton(text='Сохранить', callback_data='rec3_save')
+    keyboard.add(save_button)
+
+    return keyboard
+
+
+def recommendation_edit_keyboard_4(user_data):
+    keyboard = InlineKeyboardMarkup(row_width=3)
+    recommendations = get_recommendations('Активность')
+
+    on = '✅ '
+    off = '❌ '
+
+    buttons = []
+    for option in recommendations['Активность']:
+        button_text = f"{on if str(option['id']) in user_data else off}{option['id']}"
+        button = InlineKeyboardButton(button_text, callback_data=f'edit_rec_4_{option["id"]}')
+        keyboard.add(button)
+
+    column1 = buttons[:len(buttons) // 3]
+    column2 = buttons[len(buttons) // 3: 2 * len(buttons) // 3]
+    column3 = buttons[2 * len(buttons) // 3:]
+
+    for btn1, btn2, btn3 in zip(column1, column2, column3):
+        keyboard.add(btn1, btn2, btn3)
+
+    save_button = InlineKeyboardButton(text='Сохранить', callback_data='rec4_save')
+    keyboard.add(save_button)
+
+    return keyboard
+
+
+def recommendation_edit_keyboard_5(user_data):
+    keyboard = InlineKeyboardMarkup(row_width=3)
+    recommendations = get_recommendations('Слизистые')
+
+    on = '✅ '
+    off = '❌ '
+
+    buttons = []
+    for option in recommendations['Слизистые']:
+        button_text = f"{on if str(option['id']) in user_data else off}{option['id']}"
+        button = InlineKeyboardButton(button_text, callback_data=f'edit_rec_5_{option["id"]}')
+        keyboard.add(button)
+
+    column1 = buttons[:len(buttons) // 3]
+    column2 = buttons[len(buttons) // 3: 2 * len(buttons) // 3]
+    column3 = buttons[2 * len(buttons) // 3:]
+
+    for btn1, btn2, btn3 in zip(column1, column2, column3):
+        keyboard.add(btn1, btn2, btn3)
+
+    save_button = InlineKeyboardButton(text='Сохранить', callback_data='rec5_save')
+    keyboard.add(save_button)
+
+    return keyboard
+
+
+def recommendation_edit_keyboard_6(user_data):
+    keyboard = InlineKeyboardMarkup(row_width=3)
+    recommendations = get_recommendations('Кислотность и желчеотток')
+
+    on = '✅ '
+    off = '❌ '
+
+    buttons = []
+    for option in recommendations['Кислотность и желчеотток']:
+        button_text = f"{on if str(option['id']) in user_data else off}{option['id']}"
+        button = InlineKeyboardButton(button_text, callback_data=f'edit_rec_6_{option["id"]}')
+        keyboard.add(button)
+
+    column1 = buttons[:len(buttons) // 3]
+    column2 = buttons[len(buttons) // 3: 2 * len(buttons) // 3]
+    column3 = buttons[2 * len(buttons) // 3:]
+
+    for btn1, btn2, btn3 in zip(column1, column2, column3):
+        keyboard.add(btn1, btn2, btn3)
+
+    save_button = InlineKeyboardButton(text='Сохранить', callback_data='rec6_save')
+    keyboard.add(save_button)
 
     return keyboard
