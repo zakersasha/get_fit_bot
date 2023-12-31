@@ -76,17 +76,13 @@ async def process_client_add_menu(call: types.CallbackQuery, state=None):
 
     else:
         if client_data['allergic'] in Config.NO_ANSWER:
-            print('запрос без алергии')
-            print(client_data)
+            message = await make_gpt_request(client_data['food_protocol_id'], None)
+            await call.message.answer(message)
             await state.finish()
-            # food_data = get_food_protocols_by_id(client_data['food_protocol_id'])
-            # await make_gpt_request(food_data, None)
         else:
-            print('запрос c алергией')
-            print(client_data)
+            message = make_gpt_request(client_data['food_protocol_id'], client_data['allergic'])
+            await call.message.answer(message)
             await state.finish()
-            # food_data = get_food_protocols_by_id(client_data['food_protocol_id'])
-            # await make_gpt_request(food_data, client_data['allergic'])
 
 
 async def process_client_add_rec(call: types.CallbackQuery, state=None):

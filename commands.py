@@ -64,4 +64,4 @@ def register_commands(dp: Dispatcher):
     dp.register_message_handler(get_name, state=FormStates.NAME)
     dp.register_message_handler(get_email, state=FormStates.EMAIL)
     dp.register_message_handler(get_allergies, state=FormStates.ALLERGIES)
-    dp.register_message_handler(get_recommendations_1)
+    dp.register_message_handler(get_recommendations_1, state=FormStates.RECOMMENDATION_1)

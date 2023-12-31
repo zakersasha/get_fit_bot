@@ -16,7 +16,8 @@ class Config(object):
     DB_HOST = os.environ.get('DB_HOST')
     DB_PORT = os.environ.get('DB_PORT')
 
-    NO_ANSWER = ['no', 'net', 'нет', 'NO', 'No', 'Нет', 'Отсутствуют', 'Отсутствует', 'отсутствуют', 'отсутствует', '-']
+    NO_ANSWER = ['no', 'net', 'нет', 'NO', 'No', 'Нет', 'Отсутствуют', 'Отсутствует', 'отсутствуют', 'отсутствует', '-',
+                 '0']
 
     CATALOG_ID = os.environ.get('CATALOG_ID')
     API_KEY_ID = os.environ.get('API_KEY_ID')
