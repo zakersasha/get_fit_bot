@@ -77,11 +77,11 @@ async def process_client_add_menu(call: types.CallbackQuery, state=None):
     else:
         if client_data['allergic'] in Config.NO_ANSWER:
             message = await make_gpt_request(client_data['food_protocol_id'], None)
-            await call.message.answer(message)
+            await call.message.edit_text(message)
             await state.finish()
         else:
             message = make_gpt_request(client_data['food_protocol_id'], client_data['allergic'])
-            await call.message.answer(message)
+            await call.message.edit_text(message)
             await state.finish()
 
 
