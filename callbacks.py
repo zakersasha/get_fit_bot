@@ -181,7 +181,7 @@ async def process_save_recommendation_1(call: types.CallbackQuery, state: FSMCon
     for i in recommendations['Витамины']:
         msg += f'{i["id"]}. {i["name"]}\n'
 
-    await call.message.answer(text="Выберите рекомендации по <b>Витаминам</b>:\n\n" + msg,
+    await call.message.edit_text(text="Выберите рекомендации по <b>Витаминам</b>:\n\n" + msg,
                               reply_markup=recommendations_keyboard_2([]))
     await FormStates.RECOMMENDATION_2.set()
 
@@ -214,7 +214,7 @@ async def process_save_recommendation_2(call: types.CallbackQuery, state: FSMCon
     for i in recommendations['Режим дня и сон']:
         msg += f'{i["id"]}. {i["name"]}\n'
 
-    await call.message.answer(text="Выберите рекомендации по <b>Режим дня и сон</b>:\n\n" + msg,
+    await call.message.edit_text(text="Выберите рекомендации по <b>Режим дня и сон</b>:\n\n" + msg,
                               reply_markup=recommendations_keyboard_3([]))
     await FormStates.RECOMMENDATION_3.set()
 
@@ -248,7 +248,7 @@ async def process_save_recommendation_3(call: types.CallbackQuery, state: FSMCon
     for i in recommendations['Активность']:
         msg += f'{i["id"]}. {i["name"]}\n'
 
-    await call.message.answer(text="Выберите рекомендации по <b>Активность</b>:\n\n" + msg,
+    await call.message.edit_text(text="Выберите рекомендации по <b>Активность</b>:\n\n" + msg,
                               reply_markup=recommendations_keyboard_4([]))
     await FormStates.RECOMMENDATION_4.set()
 
@@ -282,7 +282,7 @@ async def process_save_recommendation_4(call: types.CallbackQuery, state: FSMCon
     for i in recommendations['Слизистые']:
         msg += f'{i["id"]}. {i["name"]}\n'
 
-    await call.message.answer(text="Выберите рекомендации по <b>Слизистые</b>:\n\n" + msg,
+    await call.message.edit_text(text="Выберите рекомендации по <b>Слизистые</b>:\n\n" + msg,
                               reply_markup=recommendations_keyboard_5([]))
 
     await FormStates.RECOMMENDATION_5.set()
@@ -317,7 +317,7 @@ async def process_save_recommendation_5(call: types.CallbackQuery, state: FSMCon
     for i in recommendations['Кислотность и желчеотток']:
         msg += f'{i["id"]}. {i["name"]}\n'
 
-    await call.message.answer(text="Выберите рекомендации по <b>Кислотность и желчеотток</b>:\n\n" + msg,
+    await call.message.edit_text(text="Выберите рекомендации по <b>Кислотность и желчеотток</b>:\n\n" + msg,
                               reply_markup=recommendations_keyboard_6([]))
     await FormStates.RECOMMENDATION_6.set()
 
@@ -411,8 +411,8 @@ async def process_edit_recommendation_1(call: types.CallbackQuery, state: FSMCon
     for i in recommendations['Витамины']:
         msg += f'{i["id"]}. {i["name"]}\n'
 
-    await call.message.answer(text="Выберите рекомендации по <b>Витаминам</b>:\n\n" + msg,
-                              reply_markup=recommendation_edit_keyboard_2([]))
+    await call.message.edit_text(text="Выберите рекомендации по <b>Витаминам</b>:\n\n" + msg,
+                                 reply_markup=recommendation_edit_keyboard_2([]))
     await FormStates.RECOMMENDATION_2.set()
 
 
@@ -444,7 +444,7 @@ async def process_edit_recommendation_2(call: types.CallbackQuery, state: FSMCon
     for i in recommendations['Режим дня и сон']:
         msg += f'{i["id"]}. {i["name"]}\n'
 
-    await call.message.answer(text="Выберите рекомендации по <b>Режим дня и сон</b>:\n\n" + msg,
+    await call.message.edit_text(text="Выберите рекомендации по <b>Режим дня и сон</b>:\n\n" + msg,
                               reply_markup=recommendation_edit_keyboard_3([]))
     await FormStates.RECOMMENDATION_3.set()
 
@@ -475,7 +475,7 @@ async def process_edit_recommendation_3(call: types.CallbackQuery, state: FSMCon
     for i in recommendations['Активность']:
         msg += f'{i["id"]}. {i["name"]}\n'
 
-    await call.message.answer(text="Выберите рекомендации по <b>Активность</b>:\n\n" + msg,
+    await call.message.edit_text(text="Выберите рекомендации по <b>Активность</b>:\n\n" + msg,
                               reply_markup=recommendation_edit_keyboard_4([]))
     await FormStates.RECOMMENDATION_4.set()
 
@@ -506,7 +506,7 @@ async def process_edit_recommendation_4(call: types.CallbackQuery, state: FSMCon
     for i in recommendations['Слизистые']:
         msg += f'{i["id"]}. {i["name"]}\n'
 
-    await call.message.answer(text="Выберите рекомендации по <b>Слизистые</b>:\n\n" + msg,
+    await call.message.edit_text(text="Выберите рекомендации по <b>Слизистые</b>:\n\n" + msg,
                               reply_markup=recommendation_edit_keyboard_5([]))
     await FormStates.RECOMMENDATION_5.set()
 
@@ -537,7 +537,7 @@ async def process_edit_recommendation_5(call: types.CallbackQuery, state: FSMCon
     for i in recommendations['Кислотность и желчеотток']:
         msg += f'{i["id"]}. {i["name"]}\n'
 
-    await call.message.answer(text="Выберите рекомендации по <b>Кислотность и желчеотток</b>:\n\n" + msg,
+    await call.message.edit_text(text="Выберите рекомендации по <b>Кислотность и желчеотток</b>:\n\n" + msg,
                               reply_markup=recommendation_edit_keyboard_6([]))
     await FormStates.RECOMMENDATION_6.set()
 
