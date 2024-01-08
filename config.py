@@ -17,8 +17,11 @@ class Config(object):
     DB_PORT = os.environ.get('DB_PORT')
 
     NO_ANSWER = ['no', 'net', 'нет', 'NO', 'No', 'Нет', 'Отсутствуют', 'Отсутствует', 'отсутствуют', 'отсутствует', '-',
-                 '0']
+                 '0', 'none', 'nope', 'None', 'Nope', 'not']
 
     CATALOG_ID = os.environ.get('CATALOG_ID')
     API_KEY_ID = os.environ.get('API_KEY_ID')
     API_SECRET = os.environ.get('API_SECRET')
+
+    FUSION_KEY = os.environ.get('FUSION_KEY')
+    FUSION_SECRET = os.environ.get('FUSION_SECRET')

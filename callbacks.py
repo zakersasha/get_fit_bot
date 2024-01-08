@@ -5,7 +5,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 
 from config import Config
 from db import get_protocol_by_id, get_recommendations_by_ids, save_new_client, get_client_by_id, delete_client_by_id, \
-    get_recommendations, update_user_recommendations, get_food_protocols_by_id
+    get_recommendations, update_user_recommendations
 from keyboards import get_clients_keyboard, get_clients_list_keyboard, \
     get_clients_settings_keyboard, get_remove_question_keyboard, get_start_keyboard, recommendations_keyboard_1, \
     recommendations_keyboard_2, recommendations_keyboard_3, recommendations_keyboard_4, recommendations_keyboard_5, \
@@ -13,7 +13,7 @@ from keyboards import get_clients_keyboard, get_clients_list_keyboard, \
     recommendation_edit_keyboard_1, recommendation_edit_keyboard_2, recommendation_edit_keyboard_3, \
     recommendation_edit_keyboard_4, recommendation_edit_keyboard_5, recommendation_edit_keyboard_6, \
     get_clients_list_keyboard_menu
-from utils import make_gpt_request
+from utils import make_gpt_request, execute_fusion_api
 
 
 class FormStates(StatesGroup):
@@ -55,13 +55,12 @@ async def process_start_callback_clients(call: types.CallbackQuery):
 
 
 async def process_start_callback_menu(call: types.CallbackQuery):
-    await call.message.edit_text('📝 Формируем меню.')
-    await call.message.answer('Выберите клиента', reply_markup=get_clients_list_keyboard_menu())
+    await call.message.edit_text('Выберите клиента', reply_markup=get_clients_list_keyboard_menu())
 
 
 async def process_start_callback_recommendations(call: types.CallbackQuery):
-    await call.message.edit_text('💬 Формируем рекоммендации.')
-    await call.message.answer('Выберите клиента', reply_markup=get_clients_list_keyboard_rec())
+    await call.message.edit_text('💬 Формируем рекоммендации.\n\n Выберите клиента',
+                                 reply_markup=get_clients_list_keyboard_rec())
 
 
 async def process_client_add_menu(call: types.CallbackQuery, state=None):
@@ -70,18 +69,23 @@ async def process_client_add_menu(call: types.CallbackQuery, state=None):
     await state.update_data(chosen_user=client_data)
 
     if client_data['food_protocol_id'] is None:
-        await call.message.answer('❗️ У пользователя не заполнен протокол питания ❗️')
+        await call.message.edit_text('❗️ У пользователя не заполнен протокол питания ❗️')
         await state.finish()
         await call.message.answer('Выберите клиента', reply_markup=get_clients_list_keyboard_menu())
 
     else:
+        await call.message.edit_text('.. Формируем меню ..')
         if client_data['allergic'] in Config.NO_ANSWER:
-            message = await make_gpt_request(client_data['food_protocol_id'], None)
+            message, image_descriptions = make_gpt_request(client_data['food_protocol_id'], None)
             await call.message.edit_text(message)
+            # await call.message.answer('.. Формируем фотографии меню ..')
+            # execute_fusion_api(client_data['full_name'], image_descriptions)
             await state.finish()
         else:
-            message = make_gpt_request(client_data['food_protocol_id'], client_data['allergic'])
+            message, image_descriptions = make_gpt_request(client_data['food_protocol_id'], client_data['allergic'])
             await call.message.edit_text(message)
+            # await call.message.answer('.. Формируем фотографии меню ..')
+            # execute_fusion_api(client_data['full_name'], image_descriptions)
             await state.finish()
 
 
@@ -98,6 +102,7 @@ async def process_client_add_rec(call: types.CallbackQuery, state=None):
         str_recommendations = ";\n".join(client_data['recommendations']) + ";"
         await call.message.edit_text(f'👤 Вы выбрали: {client_data["full_name"]}\n\n{str_recommendations}')
         await state.finish()
+        await call.message.answer('Выберите действие:', reply_markup=get_start_keyboard())
     else:
         await call.message.answer('Выберите действие:', reply_markup=get_set_recommendations_keyboard())
 
@@ -114,7 +119,7 @@ async def process_clients_callback_add(call: types.CallbackQuery):
 
 
 async def process_clients_callback_find(call: types.CallbackQuery):
-    await call.message.answer('Выберите клиента:', reply_markup=get_clients_list_keyboard())
+    await call.message.edit_text('Выберите клиента:', reply_markup=get_clients_list_keyboard())
 
 
 async def process_clients_find_callback(call: types.CallbackQuery, state=None):
@@ -182,7 +187,7 @@ async def process_save_recommendation_1(call: types.CallbackQuery, state: FSMCon
         msg += f'{i["id"]}. {i["name"]}\n'
 
     await call.message.edit_text(text="Выберите рекомендации по <b>Витаминам</b>:\n\n" + msg,
-                              reply_markup=recommendations_keyboard_2([]))
+                                 reply_markup=recommendations_keyboard_2([]))
     await FormStates.RECOMMENDATION_2.set()
 
 
@@ -215,7 +220,7 @@ async def process_save_recommendation_2(call: types.CallbackQuery, state: FSMCon
         msg += f'{i["id"]}. {i["name"]}\n'
 
     await call.message.edit_text(text="Выберите рекомендации по <b>Режим дня и сон</b>:\n\n" + msg,
-                              reply_markup=recommendations_keyboard_3([]))
+                                 reply_markup=recommendations_keyboard_3([]))
     await FormStates.RECOMMENDATION_3.set()
 
 
@@ -249,7 +254,7 @@ async def process_save_recommendation_3(call: types.CallbackQuery, state: FSMCon
         msg += f'{i["id"]}. {i["name"]}\n'
 
     await call.message.edit_text(text="Выберите рекомендации по <b>Активность</b>:\n\n" + msg,
-                              reply_markup=recommendations_keyboard_4([]))
+                                 reply_markup=recommendations_keyboard_4([]))
     await FormStates.RECOMMENDATION_4.set()
 
 
@@ -283,7 +288,7 @@ async def process_save_recommendation_4(call: types.CallbackQuery, state: FSMCon
         msg += f'{i["id"]}. {i["name"]}\n'
 
     await call.message.edit_text(text="Выберите рекомендации по <b>Слизистые</b>:\n\n" + msg,
-                              reply_markup=recommendations_keyboard_5([]))
+                                 reply_markup=recommendations_keyboard_5([]))
 
     await FormStates.RECOMMENDATION_5.set()
 
@@ -318,7 +323,7 @@ async def process_save_recommendation_5(call: types.CallbackQuery, state: FSMCon
         msg += f'{i["id"]}. {i["name"]}\n'
 
     await call.message.edit_text(text="Выберите рекомендации по <b>Кислотность и желчеотток</b>:\n\n" + msg,
-                              reply_markup=recommendations_keyboard_6([]))
+                                 reply_markup=recommendations_keyboard_6([]))
     await FormStates.RECOMMENDATION_6.set()
 
 
@@ -445,7 +450,7 @@ async def process_edit_recommendation_2(call: types.CallbackQuery, state: FSMCon
         msg += f'{i["id"]}. {i["name"]}\n'
 
     await call.message.edit_text(text="Выберите рекомендации по <b>Режим дня и сон</b>:\n\n" + msg,
-                              reply_markup=recommendation_edit_keyboard_3([]))
+                                 reply_markup=recommendation_edit_keyboard_3([]))
     await FormStates.RECOMMENDATION_3.set()
 
 
@@ -476,7 +481,7 @@ async def process_edit_recommendation_3(call: types.CallbackQuery, state: FSMCon
         msg += f'{i["id"]}. {i["name"]}\n'
 
     await call.message.edit_text(text="Выберите рекомендации по <b>Активность</b>:\n\n" + msg,
-                              reply_markup=recommendation_edit_keyboard_4([]))
+                                 reply_markup=recommendation_edit_keyboard_4([]))
     await FormStates.RECOMMENDATION_4.set()
 
 
@@ -507,7 +512,7 @@ async def process_edit_recommendation_4(call: types.CallbackQuery, state: FSMCon
         msg += f'{i["id"]}. {i["name"]}\n'
 
     await call.message.edit_text(text="Выберите рекомендации по <b>Слизистые</b>:\n\n" + msg,
-                              reply_markup=recommendation_edit_keyboard_5([]))
+                                 reply_markup=recommendation_edit_keyboard_5([]))
     await FormStates.RECOMMENDATION_5.set()
 
 
@@ -538,7 +543,7 @@ async def process_edit_recommendation_5(call: types.CallbackQuery, state: FSMCon
         msg += f'{i["id"]}. {i["name"]}\n'
 
     await call.message.edit_text(text="Выберите рекомендации по <b>Кислотность и желчеотток</b>:\n\n" + msg,
-                              reply_markup=recommendation_edit_keyboard_6([]))
+                                 reply_markup=recommendation_edit_keyboard_6([]))
     await FormStates.RECOMMENDATION_6.set()
 
 
@@ -582,7 +587,17 @@ async def process_edit_recommendation_6(call: types.CallbackQuery, state: FSMCon
                                  f'Рекомендации: \n{str_recommendations}')
 
     await state.finish()
-    await call.message.answer('Выберите действие:', reply_markup=get_start_keyboard())
+    await call.message.edit_text('Выберите действие:', reply_markup=get_start_keyboard())
+
+
+async def process_back_to_start_menu(call: types.CallbackQuery, state: FSMContext):
+    await state.finish()
+    await call.message.edit_text('Выберите действие:', reply_markup=get_start_keyboard())
+
+
+async def process_back_to_clients_menu(call: types.CallbackQuery, state: FSMContext):
+    await state.finish()
+    await call.message.edit_text('Выберите действие:', reply_markup=get_clients_list_keyboard())
 
 
 def register_callbacks(dp: Dispatcher):
@@ -603,6 +618,8 @@ def register_callbacks(dp: Dispatcher):
     # Clients
     dp.register_callback_query_handler(process_clients_callback_add, lambda c: c.data == 'add_client')
     dp.register_callback_query_handler(process_clients_callback_find, lambda c: c.data == 'find_client')
+    dp.register_callback_query_handler(process_back_to_start_menu, lambda c: c.data == 'back_start', state='*')
+    dp.register_callback_query_handler(process_back_to_start_menu, lambda c: c.data == 'back_clients', state='*')
 
     # Find
     dp.register_callback_query_handler(process_clients_find_callback, lambda c: c.data.startswith('client_'))

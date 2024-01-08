@@ -8,9 +8,8 @@ def get_clients_keyboard():
     keyboard = InlineKeyboardMarkup(row_width=1)
     btn_add_client = InlineKeyboardButton('Добавить нового клиента', callback_data='add_client')
     btn_find_client = InlineKeyboardButton('Найти клиента', callback_data='find_client')
-
-    keyboard.add(btn_add_client, btn_find_client)
-
+    btn_back = InlineKeyboardButton('Назад', callback_data='back_start')
+    keyboard.add(btn_add_client, btn_find_client, btn_back)
     return keyboard
 
 
@@ -194,6 +193,8 @@ def get_clients_list_keyboard():
     clients = get_clients_data()
     for client in clients:
         keyboard.add(InlineKeyboardButton(client['full_name'], callback_data=f'client_{str(client["id"])}'))
+    btn_back = InlineKeyboardButton('Назад', callback_data='back_clients')
+    keyboard.add(btn_back)
     return keyboard
 
 
@@ -212,6 +213,8 @@ def get_clients_list_keyboard_rec():
     clients = get_clients_data()
     for client in clients:
         keyboard.add(InlineKeyboardButton(client['full_name'], callback_data=f'clients_rec_{str(client["id"])}'))
+    btn_back = InlineKeyboardButton('Назад', callback_data='back_start')
+    keyboard.add(btn_back)
     return keyboard
 
 
@@ -220,6 +223,8 @@ def get_clients_list_keyboard_menu():
     clients = get_clients_data()
     for client in clients:
         keyboard.add(InlineKeyboardButton(client['full_name'], callback_data=f'menu_clients_{str(client["id"])}'))
+    btn_back = InlineKeyboardButton('Назад', callback_data='back_start')
+    keyboard.add(btn_back)
     return keyboard
 
 
