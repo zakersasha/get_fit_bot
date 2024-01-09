@@ -10,7 +10,7 @@ from keyboards import get_start_keyboard, get_clients_keyboard, get_food_protoco
 
 
 async def send_welcome_keyboard(message: Message, state: FSMContext):
-    await state.finish()
+    await state.reset_state()
     await message.answer('Выберите действие:', reply_markup=get_start_keyboard())
 
 
