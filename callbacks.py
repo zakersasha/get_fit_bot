@@ -600,7 +600,7 @@ async def process_edit_recommendation_6(call: types.CallbackQuery, state: FSMCon
 
 async def process_back_to_start_menu(call: types.CallbackQuery, state: FSMContext):
     await state.finish()
-    await call.message.edit_text('Выберите действие:', reply_markup=get_clients_keyboard())
+    await call.message.edit_text('Выберите действие:', reply_markup=get_start_keyboard())
 
 
 async def process_back_to_clients_menu(call: types.CallbackQuery, state: FSMContext):
@@ -627,7 +627,7 @@ def register_callbacks(dp: Dispatcher):
     dp.register_callback_query_handler(process_clients_callback_add, lambda c: c.data == 'add_client')
     dp.register_callback_query_handler(process_clients_callback_find, lambda c: c.data == 'find_client')
     dp.register_callback_query_handler(process_back_to_start_menu, lambda c: c.data == 'back_start', state='*')
-    dp.register_callback_query_handler(process_back_to_start_menu, lambda c: c.data == 'back_clients', state='*')
+    dp.register_callback_query_handler(process_back_to_clients_menu, lambda c: c.data == 'back_clients', state='*')
 
     # Find
     dp.register_callback_query_handler(process_clients_find_callback, lambda c: c.data.startswith('client_'))
