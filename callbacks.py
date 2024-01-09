@@ -99,7 +99,7 @@ async def process_client_add_rec(call: types.CallbackQuery, state=None):
         await call.message.answer('Выберите действие:', reply_markup=get_set_recommendations_keyboard())
 
     elif len(client_data['recommendations']) > 0:
-        str_recommendations = ";\n".join(client_data['recommendations']) + ";"
+        str_recommendations = "-" + ";\n- ".join(client_data['recommendations']) + ";"
         await call.message.edit_text(f'👤 Вы выбрали: {client_data["full_name"]}\n\n{str_recommendations}')
         await state.finish()
         await call.message.answer('Выберите действие:', reply_markup=get_start_keyboard())
@@ -126,7 +126,13 @@ async def process_clients_find_callback(call: types.CallbackQuery, state=None):
     client_data = get_client_by_id(int(call.data.replace('client_', '')))
     await ClientFindChoice.choosing_user.set()
     await state.update_data(chosen_user=client_data)
-    await call.message.edit_text(f'👤 Вы выбрали: {client_data["full_name"]}')
+    str_recommendations = "-" + ";\n- ".join(client_data['recommendations']) + ";"
+    await call.message.edit_text(f'👤 Вы выбрали: {client_data["full_name"]}\n\n'
+                                 f'<b>Email:</b> {client_data["email"]}\n'
+                                 f'<b>Протокол питания:</b> {client_data["food_protocol_name"]}\n'
+                                 f'<b>Аллергии:</b> {client_data["allergic"]}\n'
+                                 f'<b>Рекомендации:</b> \n{str_recommendations}')
+
     await call.message.answer('Выберите действие: ', reply_markup=get_clients_settings_keyboard())
 
 
@@ -156,7 +162,9 @@ async def process_client_remove_no_callback(call: types.CallbackQuery, state: FS
 
 async def process_food_protocol(call: types.CallbackQuery, state: FSMContext):
     await state.update_data(food_protocol=call.data.replace('protocol_', ''))
-    await call.message.edit_text('Введите информацию об аллергических реакциях:')
+    await call.message.edit_text(
+        'Введите продукты, которые не соответствуют вкусовым предпочтениям, вызывают аллергическую реакцию или '
+        'непереносимость:')
     await FormStates.ALLERGIES.set()
 
 
@@ -367,13 +375,13 @@ async def process_save_recommendation_6(call: types.CallbackQuery, state: FSMCon
                     recommendations=recommendations,
                     recommendations_ids=recommendation_ids)
 
-    str_recommendations = ";\n".join(recommendations) + ";"
+    str_recommendations = "-" + ";\n- ".join(recommendations) + ";"
     await call.message.edit_text(f'Данные сохранены! \n'
-                                 f'ФИО: {state_data["full_name"]}\n'
-                                 f'Email: {state_data["email"]}\n'
-                                 f'Протокол питания: {food_protocol_name}\n'
-                                 f'Аллергии: {state_data["allergies"]}\n'
-                                 f'Рекомендации: \n{str_recommendations}')
+                                 f'<b>ФИО:</b> {state_data["full_name"]}\n'
+                                 f'<b>Email:</b> {state_data["email"]}\n'
+                                 f'<b>Протокол питания:</b> {food_protocol_name}\n'
+                                 f'<b>Аллергии:</b> {state_data["allergies"]}\n'
+                                 f'<b>Рекомендации:</b> \n{str_recommendations}')
 
     await state.finish()
     await call.message.answer('Выберите действие:', reply_markup=get_start_keyboard())
@@ -592,7 +600,7 @@ async def process_edit_recommendation_6(call: types.CallbackQuery, state: FSMCon
 
 async def process_back_to_start_menu(call: types.CallbackQuery, state: FSMContext):
     await state.finish()
-    await call.message.edit_text('Выберите действие:', reply_markup=get_start_keyboard())
+    await call.message.edit_text('Выберите действие:', reply_markup=get_clients_keyboard())
 
 
 async def process_back_to_clients_menu(call: types.CallbackQuery, state: FSMContext):
