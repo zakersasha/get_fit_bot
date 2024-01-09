@@ -9,7 +9,8 @@ from keyboards import get_start_keyboard, get_clients_keyboard, get_food_protoco
     recommendations_keyboard_1, recommendations_keyboard_2
 
 
-async def send_welcome_keyboard(message: Message):
+async def send_welcome_keyboard(message: Message, state: FSMContext):
+    await state.finish()
     await message.answer('Выберите действие:', reply_markup=get_start_keyboard())
 
 
@@ -57,7 +58,7 @@ async def get_recommendations_1(message: Message):
 
 def register_commands(dp: Dispatcher):
     """Register bot commands."""
-    dp.register_message_handler(send_welcome_keyboard, commands=['start'])
+    dp.register_message_handler(send_welcome_keyboard, commands=['start'], state='*')
     dp.register_message_handler(send_clients_keyboard, commands=['clients'])
     dp.register_message_handler(send_clients_keyboard, commands=['add_client'])
     dp.register_message_handler(send_clients_keyboard, commands=['find_client'])
