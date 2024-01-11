@@ -111,8 +111,11 @@ async def process_client_add_rec(call: types.CallbackQuery, state=None):
         await call.message.answer('Выберите действие:', reply_markup=get_set_recommendations_keyboard())
 
     elif len(client_data['recommendations']) > 0:
-        str_recommendations = "- " + ";\n- ".join(client_data['recommendations']) + ";"
-        await call.message.edit_text(f'👤 Вы выбрали: {client_data["full_name"]}\n\n{str_recommendations}')
+        if client_data['recommendations']:
+            rec = setup_rec_data(client_data['recommendations'])
+        else:
+            rec = 'Нет'
+        await call.message.edit_text(f'👤 Вы выбрали: {client_data["full_name"]}\n\n{rec}')
         await state.finish()
         await call.message.answer('Выберите действие:', reply_markup=get_start_keyboard())
     else:
