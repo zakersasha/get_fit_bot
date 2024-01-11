@@ -260,3 +260,34 @@ def get_food_protocols_by_id(food_id):
         if connection:
             cursor.close()
             connection.close()
+
+
+def setup_rec_data(names):
+    connection = psycopg2.connect(**db_params)
+    cursor = connection.cursor()
+    try:
+        query = "SELECT name, title FROM recommendations WHERE name IN %s"
+
+        cursor.execute(query, (tuple(names),))
+
+        results = cursor.fetchall()
+
+        formatted_string = ""
+        headers_set = set()
+
+        for item in results:
+            header, content = item
+            if content in headers_set:
+                formatted_string += f"\n- {header}"
+            else:
+                formatted_string += f"\n<b>{content}</b>\n- {header}"
+                headers_set.add(content)
+
+        return formatted_string
+    except (Exception, psycopg2.Error) as error:
+        print("Ошибка при работе с PostgreSQL", error)
+
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()

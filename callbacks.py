@@ -5,7 +5,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 
 from config import Config
 from db import get_protocol_by_id, get_recommendations_by_ids, save_new_client, get_client_by_id, delete_client_by_id, \
-    get_recommendations, update_user_recommendations
+    get_recommendations, update_user_recommendations, setup_rec_data
 from keyboards import get_clients_keyboard, get_clients_list_keyboard, \
     get_clients_settings_keyboard, get_remove_question_keyboard, get_start_keyboard, recommendations_keyboard_1, \
     recommendations_keyboard_2, recommendations_keyboard_3, recommendations_keyboard_4, recommendations_keyboard_5, \
@@ -99,7 +99,7 @@ async def process_client_add_rec(call: types.CallbackQuery, state=None):
         await call.message.answer('Выберите действие:', reply_markup=get_set_recommendations_keyboard())
 
     elif len(client_data['recommendations']) > 0:
-        str_recommendations = "-" + ";\n- ".join(client_data['recommendations']) + ";"
+        str_recommendations = "- " + ";\n- ".join(client_data['recommendations']) + ";"
         await call.message.edit_text(f'👤 Вы выбрали: {client_data["full_name"]}\n\n{str_recommendations}')
         await state.finish()
         await call.message.answer('Выберите действие:', reply_markup=get_start_keyboard())
@@ -126,12 +126,17 @@ async def process_clients_find_callback(call: types.CallbackQuery, state=None):
     client_data = get_client_by_id(int(call.data.replace('client_', '')))
     await ClientFindChoice.choosing_user.set()
     await state.update_data(chosen_user=client_data)
-    str_recommendations = "-" + ";\n- ".join(client_data['recommendations']) + ";"
+
+    if client_data['recommendations']:
+        recommendations = setup_rec_data(client_data['recommendations'])
+    else:
+        recommendations = 'Нет'
+
     await call.message.edit_text(f'👤 Вы выбрали: {client_data["full_name"]}\n\n'
                                  f'<b>Email:</b> {client_data["email"]}\n'
                                  f'<b>Протокол питания:</b> {client_data["food_protocol_name"]}\n'
                                  f'<b>Аллергии:</b> {client_data["allergic"]}\n'
-                                 f'<b>Рекомендации:</b> \n{str_recommendations}')
+                                 f'<b>Рекомендации:</b> \n{recommendations}')
 
     await call.message.answer('Выберите действие: ', reply_markup=get_clients_settings_keyboard())
 
@@ -375,13 +380,16 @@ async def process_save_recommendation_6(call: types.CallbackQuery, state: FSMCon
                     recommendations=recommendations,
                     recommendations_ids=recommendation_ids)
 
-    str_recommendations = "-" + ";\n- ".join(recommendations) + ";"
+    if recommendations:
+        rec = setup_rec_data(recommendations)
+    else:
+        rec = 'Нет'
     await call.message.edit_text(f'Данные сохранены! \n'
                                  f'<b>ФИО:</b> {state_data["full_name"]}\n'
                                  f'<b>Email:</b> {state_data["email"]}\n'
                                  f'<b>Протокол питания:</b> {food_protocol_name}\n'
                                  f'<b>Аллергии:</b> {state_data["allergies"]}\n'
-                                 f'<b>Рекомендации:</b> \n{str_recommendations}')
+                                 f'<b>Рекомендации:</b> \n{rec}')
 
     await state.finish()
     await call.message.answer('Выберите действие:', reply_markup=get_start_keyboard())
@@ -589,10 +597,13 @@ async def process_edit_recommendation_6(call: types.CallbackQuery, state: FSMCon
                                 recommendations=recommendations,
                                 recommendations_ids=recommendation_ids)
 
-    str_recommendations = ";\n".join(recommendations) + ";"
+    if recommendations:
+        rec = setup_rec_data(recommendations)
+    else:
+        rec = 'Нет'
     await call.message.edit_text(f'Рекомендации обновлены! \n'
                                  f'ФИО: {state_data["chosen_user"]["full_name"]}\n\n'
-                                 f'Рекомендации: \n{str_recommendations}')
+                                 f'Рекомендации: \n{rec}')
 
     await state.finish()
     await call.message.edit_text('Выберите действие:', reply_markup=get_start_keyboard())
