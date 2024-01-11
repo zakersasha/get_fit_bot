@@ -1,6 +1,7 @@
 """App initialization."""
 import asyncio
 import logging
+import re
 
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
@@ -31,15 +32,15 @@ async def main():
     """Bot app creation."""
     logging.basicConfig(level=logging.INFO)
 
-    bot = Bot(Config.TOKEN, parse_mode='HTML')
+    getfit_menu_bot = Bot(Config.TOKEN, parse_mode='HTML')
     storage = MemoryStorage()
-    dp = Dispatcher(bot, storage=storage)
+    dp = Dispatcher(getfit_menu_bot, storage=storage)
 
     register_commands(dp)
     register_callbacks(dp)
 
     @dp.inline_handler(state=ClientFind.user)
-    async def inline_query(query: types.InlineQuery, state: FSMContext):
+    async def inline_query(query: types.InlineQuery, state: FSMContext, bot=getfit_menu_bot):
         query_text = query.query.lower()
         results = []
 
@@ -59,7 +60,7 @@ async def main():
         await query.answer(results=results, cache_time=5)
 
     @dp.inline_handler(state=ClientFindMenu.user)
-    async def inline_query(query: types.InlineQuery, state: FSMContext):
+    async def inline_query(query: types.InlineQuery, state: FSMContext, bot=getfit_menu_bot):
         query_text = query.query.lower()
         results = []
 
@@ -79,7 +80,7 @@ async def main():
         await query.answer(results=results, cache_time=5)
 
     @dp.inline_handler(state=ClientFindRec.user)
-    async def inline_query(query: types.InlineQuery, state: FSMContext):
+    async def inline_query(query: types.InlineQuery, state: FSMContext, bot=getfit_menu_bot):
         query_text = query.query.lower()
         results = []
 
@@ -98,13 +99,13 @@ async def main():
         await state.update_data(client='find_rec')
         await query.answer(results=results, cache_time=5)
 
-    await set_bot_commands(bot)
+    await set_bot_commands(getfit_menu_bot)
     try:
         await dp.start_polling(allowed_updates=get_handled_updates_list(dp))
     finally:
         await dp.storage.close()
         await dp.storage.wait_closed()
-        await bot.session.close()
+        await getfit_menu_bot.session.close()
 
 
 try:
