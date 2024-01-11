@@ -15,7 +15,7 @@ from keyboards import get_clients_keyboard, get_clients_list_keyboard, \
     get_clients_list_keyboard_menu, get_edit_list_keyboard, get_edit_food_protocols_keyboard, \
     edit_recommendation_keyboard_1, edit_recommendation_keyboard_2, edit_recommendation_keyboard_3, \
     edit_recommendation_keyboard_4, edit_recommendation_keyboard_5, edit_recommendation_keyboard_6, \
-    get_menu_settings_keyboard
+    get_menu_settings_keyboard, get_back_keyboard
 from utils import make_gpt_request, execute_fusion_api
 
 
@@ -108,14 +108,15 @@ async def process_client_add_menu(call: types.CallbackQuery, state=None):
 
 
 async def process_generate_pictures(call: types.CallbackQuery, state: FSMContext):
-    state_data = await state.get_data()
+    # state_data = await state.get_data()
     await call.message.edit_text("... Генерируем картинки по меню ... (в разработке)")
     # execute_fusion_api(state_data['chosen_user']['full_name'], state_data['menu'])
     await state.finish()
+    await call.message.answer('Выберите действие:', reply_markup=get_start_keyboard())
 
 
 async def process_edit_menu(call: types.CallbackQuery):
-    await call.message.edit_text("Введите обновленное меню")
+    await call.message.edit_text("Введите обновленное меню", reply_markup=get_back_keyboard())
     await ClientMenuEdit.menu.set()
 
 
