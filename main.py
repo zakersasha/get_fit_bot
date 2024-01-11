@@ -1,7 +1,6 @@
 """App initialization."""
 import asyncio
 import logging
-import re
 
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
