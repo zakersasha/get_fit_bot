@@ -1,12 +1,16 @@
 """Bot supported commands."""
-from aiogram import Dispatcher
+from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.types import Message
 
-from callbacks import FormStates, ClientFindChoice, ClientMenuEdit
-from db import get_recommendations, setup_rec_data, update_client_by_id
+from callbacks import FormStates, ClientFindChoice, ClientMenuEdit, ClientFind, ClientMenuChoice, \
+    ClientMakeRecommendationsChoice
+from config import Config
+from db import get_recommendations, setup_rec_data, update_client_by_id, get_client_by_name
 from keyboards import get_start_keyboard, get_clients_keyboard, get_food_protocols_keyboard, \
-    recommendations_keyboard_1, recommendations_keyboard_2, get_menu_settings_keyboard
+    recommendations_keyboard_1, recommendations_keyboard_2, get_menu_settings_keyboard, get_clients_settings_keyboard, \
+    get_clients_list_keyboard_menu, get_set_recommendations_keyboard
+from utils import make_gpt_request
 
 
 async def send_welcome_keyboard(message: Message, state: FSMContext):
@@ -125,12 +129,79 @@ async def get_edit_menu(message: Message, state: FSMContext):
     await message.answer("Выберите действие: ", reply_markup=get_menu_settings_keyboard())
 
 
+async def choose_user(message: types.Message, state: FSMContext):
+    state_data = await state.get_data()
+    if state_data['client'] == 'find_client':
+        client_data = get_client_by_name(message.text)
+        await ClientFindChoice.choosing_user.set()
+        await state.update_data(chosen_user=client_data)
+
+        if client_data['recommendations']:
+            recommendations = setup_rec_data(client_data['recommendations'])
+        else:
+            recommendations = 'Нет'
+
+        await message.answer(f'👤 Вы выбрали: {client_data["full_name"]}\n\n'
+                             f'<b>Email:</b> {client_data["email"]}\n'
+                             f'<b>Протокол питания:</b> {client_data["food_protocol_name"]}\n'
+                             f'<b>Аллергии:</b> {client_data["allergic"]}\n'
+                             f'<b>Рекомендации:</b> \n{recommendations}')
+
+        await message.answer('Выберите действие: ', reply_markup=get_clients_settings_keyboard())
+    elif state_data['client'] == 'find_menu':
+        client_data = get_client_by_name(message.text)
+        await ClientMenuChoice.choosing_user.set()
+        await state.update_data(chosen_user=client_data)
+
+        if client_data['food_protocol_id'] is None:
+            await message.answer('❗️ У пользователя не заполнен протокол питания ❗️')
+            await state.finish()
+            await message.answer('Выберите клиента', reply_markup=get_start_keyboard())
+
+        else:
+            temp_msg = await message.answer('.. Формируем меню ..')
+            if client_data['allergic'] in Config.NO_ANSWER:
+                msg, image_descriptions = make_gpt_request(client_data['food_protocol_id'], None)
+                await state.update_data(menu=msg)
+                await temp_msg.edit_text(msg)
+                await message.answer(f'Меню для <b>{client_data["full_name"]}</b> сформировано!')
+                await message.answer("Выберите действие: ", reply_markup=get_menu_settings_keyboard())
+
+            else:
+                msg, image_descriptions = make_gpt_request(client_data['food_protocol_id'], client_data['allergic'])
+                await state.update_data(menu=msg)
+                await temp_msg.edit_text(msg)
+                await message.answer(f'Меню для <b>{client_data["full_name"]}</b> сформировано!')
+                await message.answer("Выберите действие: ", reply_markup=get_menu_settings_keyboard())
+    elif state_data['client'] == 'find_rec':
+        client_data = get_client_by_name(message.text)
+
+        await ClientMakeRecommendationsChoice.choosing_user.set()
+        await state.update_data(chosen_user=client_data)
+
+        if client_data['recommendations'] is None:
+            await message.answer('Выберите действие:', reply_markup=get_set_recommendations_keyboard())
+
+        elif len(client_data['recommendations']) > 0:
+            if client_data['recommendations']:
+                rec = setup_rec_data(client_data['recommendations'])
+            else:
+                rec = 'Нет'
+            await message.answer(f'👤 Вы выбрали: {client_data["full_name"]}\n\n{rec}')
+            await state.finish()
+            await message.answer('Выберите действие:', reply_markup=get_start_keyboard())
+        else:
+            await message.answer('Выберите действие:', reply_markup=get_set_recommendations_keyboard())
+
+
 def register_commands(dp: Dispatcher):
     """Register bot commands."""
     dp.register_message_handler(send_welcome_keyboard, commands=['start'], state='*')
     dp.register_message_handler(send_clients_keyboard, commands=['clients'])
     dp.register_message_handler(send_clients_keyboard, commands=['add_client'])
     dp.register_message_handler(send_clients_keyboard, commands=['find_client'])
+    dp.register_message_handler(send_clients_keyboard, commands=['find_client'])
+    dp.register_message_handler(choose_user, lambda message: True, state="*")
     dp.register_message_handler(get_name, state=FormStates.NAME)
     dp.register_message_handler(get_email, state=FormStates.EMAIL)
     dp.register_message_handler(get_allergies, state=FormStates.ALLERGIES)

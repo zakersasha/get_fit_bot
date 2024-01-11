@@ -196,6 +196,27 @@ def get_client_by_id(id):
             connection.close()
 
 
+def get_client_by_name(name):
+    connection = psycopg2.connect(**db_params)
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute("SELECT * FROM clients WHERE full_name = %s", (name,))
+        client_data = cursor.fetchone()
+        columns = [desc[0] for desc in cursor.description]
+        client_dict = {columns[i]: client_data[i] for i in range(len(columns))}
+        return client_dict
+
+
+    except (Exception, psycopg2.Error) as error:
+        print("Ошибка при работе с PostgreSQL", error)
+
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
+
+
 def delete_client_by_id(id):
     connection = psycopg2.connect(**db_params)
     cursor = connection.cursor()

@@ -32,6 +32,18 @@ class FormStates(StatesGroup):
     RECOMMENDATION_6 = State()
 
 
+class ClientFind(StatesGroup):
+    user = State()
+
+
+class ClientFindMenu(StatesGroup):
+    user = State()
+
+
+class ClientFindRec(StatesGroup):
+    user = State()
+
+
 class RecStates(StatesGroup):
     REC_1 = State()
     REC_2 = State()
@@ -72,39 +84,14 @@ async def process_start_callback_clients(call: types.CallbackQuery):
 
 
 async def process_start_callback_menu(call: types.CallbackQuery):
-    await call.message.edit_text('Выберите клиента', reply_markup=get_clients_list_keyboard_menu())
+    await call.message.edit_text('Выберите клиента, используя команду @getfit_menu_bot имя клиента')
+    await ClientFindMenu.user.set()
 
 
 async def process_start_callback_recommendations(call: types.CallbackQuery):
-    await call.message.edit_text('💬 Формируем рекоммендации.\n\n Выберите клиента',
-                                 reply_markup=get_clients_list_keyboard_rec())
-
-
-async def process_client_add_menu(call: types.CallbackQuery, state=None):
-    client_data = get_client_by_id(int(call.data.replace('menu_clients_', '')))
-    await ClientMenuChoice.choosing_user.set()
-    await state.update_data(chosen_user=client_data)
-
-    if client_data['food_protocol_id'] is None:
-        await call.message.edit_text('❗️ У пользователя не заполнен протокол питания ❗️')
-        await state.finish()
-        await call.message.answer('Выберите клиента', reply_markup=get_clients_list_keyboard_menu())
-
-    else:
-        await call.message.edit_text('.. Формируем меню ..')
-        if client_data['allergic'] in Config.NO_ANSWER:
-            message, image_descriptions = make_gpt_request(client_data['food_protocol_id'], None)
-            await state.update_data(menu=message)
-            await call.message.edit_text(message)
-            await call.message.answer(f'Меню для <b>{client_data["full_name"]}</b> сформировано!')
-            await call.message.answer("Выберите действие: ", reply_markup=get_menu_settings_keyboard())
-
-        else:
-            message, image_descriptions = make_gpt_request(client_data['food_protocol_id'], client_data['allergic'])
-            await state.update_data(menu=message)
-            await call.message.edit_text(message)
-            await call.message.answer(f'Меню для <b>{client_data["full_name"]}</b> сформировано!')
-            await call.message.answer("Выберите действие: ", reply_markup=get_menu_settings_keyboard())
+    await call.message.edit_text(
+        '💬 Формируем рекоммендации.\n\n Выберите клиента, используя команду @getfit_menu_bot имя клиента')
+    await ClientFindRec.user.set()
 
 
 async def process_generate_pictures(call: types.CallbackQuery, state: FSMContext):
@@ -124,27 +111,6 @@ async def process_back_menu(call: types.CallbackQuery):
     await call.message.edit_text("Выберите действие: ", reply_markup=get_menu_settings_keyboard())
 
 
-async def process_client_add_rec(call: types.CallbackQuery, state=None):
-    client_data = get_client_by_id(int(call.data.replace('clients_rec_', '')))
-
-    await ClientMakeRecommendationsChoice.choosing_user.set()
-    await state.update_data(chosen_user=client_data)
-
-    if client_data['recommendations'] is None:
-        await call.message.answer('Выберите действие:', reply_markup=get_set_recommendations_keyboard())
-
-    elif len(client_data['recommendations']) > 0:
-        if client_data['recommendations']:
-            rec = setup_rec_data(client_data['recommendations'])
-        else:
-            rec = 'Нет'
-        await call.message.edit_text(f'👤 Вы выбрали: {client_data["full_name"]}\n\n{rec}')
-        await state.finish()
-        await call.message.answer('Выберите действие:', reply_markup=get_start_keyboard())
-    else:
-        await call.message.answer('Выберите действие:', reply_markup=get_set_recommendations_keyboard())
-
-
 async def process_client_back(call: types.CallbackQuery, state: FSMContext):
     await state.finish()
     await call.message.answer('Выберите клиента:', reply_markup=get_clients_list_keyboard_rec())
@@ -157,10 +123,11 @@ async def process_clients_callback_add(call: types.CallbackQuery):
 
 
 async def process_clients_callback_find(call: types.CallbackQuery):
-    await call.message.edit_text('Выберите клиента:', reply_markup=get_clients_list_keyboard())
+    await call.message.edit_text('Выберите клиента, используя команду @getfit_menu_bot имя клиента')
+    await ClientFind.user.set()
 
 
-async def process_clients_find_callback(call: types.CallbackQuery, state=None):
+async def process_clients_find_callback(call: types.CallbackQuery, state: FSMContext):
     client_data = get_client_by_id(int(call.data.replace('client_', '')))
     await ClientFindChoice.choosing_user.set()
     await state.update_data(chosen_user=client_data)
@@ -922,13 +889,10 @@ def register_callbacks(dp: Dispatcher):
     dp.register_callback_query_handler(process_start_callback_menu, lambda c: c.data == 'menu')
     dp.register_callback_query_handler(process_start_callback_recommendations, lambda c: c.data == 'recommendations')
 
-    dp.register_callback_query_handler(process_client_add_rec, lambda c: c.data.startswith('clients_rec_'))
     dp.register_callback_query_handler(process_client_set_rec, lambda c: c.data == 'set_rec',
                                        state='*')
     dp.register_callback_query_handler(process_client_back, lambda c: c.data == 'back',
                                        state=ClientMakeRecommendationsChoice.choosing_user)
-
-    dp.register_callback_query_handler(process_client_add_menu, lambda c: c.data.startswith('menu_clients_'))
 
     # Clients
     dp.register_callback_query_handler(process_clients_callback_add, lambda c: c.data == 'add_client')
@@ -937,7 +901,7 @@ def register_callbacks(dp: Dispatcher):
     dp.register_callback_query_handler(process_back_to_clients_menu, lambda c: c.data == 'back_clients', state='*')
 
     # Find
-    dp.register_callback_query_handler(process_clients_find_callback, lambda c: c.data.startswith('client_'))
+    dp.register_callback_query_handler(process_clients_find_callback, lambda c: c.data.startswith('client_'), state='*')
     dp.register_callback_query_handler(process_client_edit_callback, lambda c: c.data == 'edit_client',
                                        state=ClientFindChoice.choosing_user)
 
