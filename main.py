@@ -40,7 +40,7 @@ async def main():
 
     @dp.inline_handler(state=ClientFind.user)
     async def inline_query(query: types.InlineQuery, state: FSMContext):
-        query_text = query.query.lower()  # Приводим текст запроса к нижнему регистру для удобства сравнения
+        query_text = query.query.lower()
         results = []
 
         users = get_clients_data()
@@ -75,7 +75,7 @@ async def main():
                     )
                 )
 
-        await state.update_data(client='find_client')
+        await state.update_data(client='find_menu')
         await query.answer(results=results, cache_time=5)
 
     @dp.inline_handler(state=ClientFindRec.user)
@@ -95,7 +95,7 @@ async def main():
                     )
                 )
 
-        await state.update_data(client='find_client')
+        await state.update_data(client='find_rec')
         await query.answer(results=results, cache_time=5)
 
     await set_bot_commands(bot)
