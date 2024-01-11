@@ -216,6 +216,17 @@ def get_set_recommendations_keyboard():
     return keyboard
 
 
+def get_menu_settings_keyboard():
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    btn_gen = InlineKeyboardButton('Cгенерировать фото по меню', callback_data='gen_pic')
+    btn_edit_menu = InlineKeyboardButton('Редактировать меню', callback_data='edit_menu')
+    btn_back = InlineKeyboardButton('⬅️ Назад', callback_data='back_start')
+
+    keyboard.add(btn_gen, btn_edit_menu, btn_back)
+
+    return keyboard
+
+
 def get_clients_list_keyboard_rec():
     keyboard = InlineKeyboardMarkup()
     clients = get_clients_data()

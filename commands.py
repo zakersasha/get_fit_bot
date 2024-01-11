@@ -3,10 +3,10 @@ from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.types import Message
 
-from callbacks import FormStates, ClientFindChoice
+from callbacks import FormStates, ClientFindChoice, ClientMenuEdit
 from db import get_recommendations, setup_rec_data, update_client_by_id
 from keyboards import get_start_keyboard, get_clients_keyboard, get_food_protocols_keyboard, \
-    recommendations_keyboard_1, recommendations_keyboard_2
+    recommendations_keyboard_1, recommendations_keyboard_2, get_menu_settings_keyboard
 
 
 async def send_welcome_keyboard(message: Message, state: FSMContext):
@@ -119,6 +119,12 @@ async def get_recommendations_1(message: Message):
     await FormStates.RECOMMENDATION_2.set()
 
 
+async def get_edit_menu(message: Message, state: FSMContext):
+    await message.answer(f"Меню обновлено. \n\n {message.text} ")
+    await state.update_data(menu=message.text)
+    await message.answer("Выберите действие: ", reply_markup=get_menu_settings_keyboard())
+
+
 def register_commands(dp: Dispatcher):
     """Register bot commands."""
     dp.register_message_handler(send_welcome_keyboard, commands=['start'], state='*')
@@ -132,3 +138,4 @@ def register_commands(dp: Dispatcher):
     dp.register_message_handler(get_edit_name, state=ClientFindChoice.name)
     dp.register_message_handler(get_edit_email, state=ClientFindChoice.email)
     dp.register_message_handler(get_edit_allergic, state=ClientFindChoice.allergic)
+    dp.register_message_handler(get_edit_menu, state=ClientMenuEdit.menu)

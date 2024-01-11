@@ -14,7 +14,8 @@ from keyboards import get_clients_keyboard, get_clients_list_keyboard, \
     recommendation_edit_keyboard_4, recommendation_edit_keyboard_5, recommendation_edit_keyboard_6, \
     get_clients_list_keyboard_menu, get_edit_list_keyboard, get_edit_food_protocols_keyboard, \
     edit_recommendation_keyboard_1, edit_recommendation_keyboard_2, edit_recommendation_keyboard_3, \
-    edit_recommendation_keyboard_4, edit_recommendation_keyboard_5, edit_recommendation_keyboard_6
+    edit_recommendation_keyboard_4, edit_recommendation_keyboard_5, edit_recommendation_keyboard_6, \
+    get_menu_settings_keyboard
 from utils import make_gpt_request, execute_fusion_api
 
 
@@ -58,6 +59,10 @@ class ClientMenuChoice(StatesGroup):
     choosing_user = State()
 
 
+class ClientMenuEdit(StatesGroup):
+    menu = State()
+
+
 class ClientMakeRecommendationsChoice(StatesGroup):
     choosing_user = State()
 
@@ -89,16 +94,29 @@ async def process_client_add_menu(call: types.CallbackQuery, state=None):
         await call.message.edit_text('.. Формируем меню ..')
         if client_data['allergic'] in Config.NO_ANSWER:
             message, image_descriptions = make_gpt_request(client_data['food_protocol_id'], None)
+            await state.update_data(menu=message)
             await call.message.edit_text(message)
-            # await call.message.answer('.. Формируем фотографии меню ..')
-            # execute_fusion_api(client_data['full_name'], image_descriptions)
-            await state.finish()
+            await call.message.answer(f'Меню для <b>{client_data["full_name"]}</b> сформировано!')
+            await call.message.answer("Выберите действие: ", reply_markup=get_menu_settings_keyboard())
+
         else:
             message, image_descriptions = make_gpt_request(client_data['food_protocol_id'], client_data['allergic'])
+            await state.update_data(menu=message)
             await call.message.edit_text(message)
-            # await call.message.answer('.. Формируем фотографии меню ..')
-            # execute_fusion_api(client_data['full_name'], image_descriptions)
-            await state.finish()
+            await call.message.answer(f'Меню для <b>{client_data["full_name"]}</b> сформировано!')
+            await call.message.answer("Выберите действие: ", reply_markup=get_menu_settings_keyboard())
+
+
+async def process_generate_pictures(call: types.CallbackQuery, state: FSMContext):
+    state_data = await state.get_data()
+    await call.message.edit_text("... Генерируем картинки по меню ... (в разработке)")
+    # execute_fusion_api(state_data['chosen_user']['full_name'], state_data['menu'])
+    await state.finish()
+
+
+async def process_edit_menu(call: types.CallbackQuery):
+    await call.message.edit_text("Введите обновленное меню")
+    await ClientMenuEdit.menu.set()
 
 
 async def process_client_add_rec(call: types.CallbackQuery, state=None):
@@ -1020,3 +1038,9 @@ def register_callbacks(dp: Dispatcher):
                                        state=ClientFindChoice.choosing_user)
     dp.register_callback_query_handler(process_edit_recs, lambda c: c.data == 'recs_edit',
                                        state=ClientFindChoice.choosing_user)
+
+    # Menu keyboard processing
+    dp.register_callback_query_handler(process_generate_pictures, lambda c: c.data == 'gen_pic',
+                                       state='*')
+    dp.register_callback_query_handler(process_edit_menu, lambda c: c.data == 'edit_menu',
+                                       state='*')
