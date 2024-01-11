@@ -241,6 +241,44 @@ def update_user_recommendations(user_id, recommendations_ids, recommendations):
             connection.close()
 
 
+def update_client_by_id(client_data):
+    connection = psycopg2.connect(**db_params)
+    cursor = connection.cursor()
+
+    try:
+        sql_query = """
+                UPDATE clients
+                SET
+                    full_name = %s,
+                    email = %s,
+                    food_protocol_id = %s,
+                    allergic = %s,
+                    recommendations = %s,
+                    food_protocol_name = %s,
+                    recommendations_ids = %s
+                WHERE id = %s
+            """
+        cursor.execute(sql_query, (
+            client_data['full_name'],
+            client_data['email'],
+            client_data['food_protocol_id'],
+            client_data['allergic'],
+            client_data['recommendations'],
+            client_data['food_protocol_name'],
+            client_data['recommendations_ids'],
+            client_data['id']
+        ))
+        connection.commit()
+
+    except (Exception, psycopg2.Error) as error:
+        print("Ошибка при работе с PostgreSQL", error)
+
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
+
+
 def get_food_protocols_by_id(food_id):
     connection = psycopg2.connect(**db_params)
     cursor = connection.cursor()
