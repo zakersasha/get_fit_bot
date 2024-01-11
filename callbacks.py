@@ -120,6 +120,10 @@ async def process_edit_menu(call: types.CallbackQuery):
     await ClientMenuEdit.menu.set()
 
 
+async def process_back_menu(call: types.CallbackQuery):
+    await call.message.edit_text("Выберите действие: ", reply_markup=get_menu_settings_keyboard())
+
+
 async def process_client_add_rec(call: types.CallbackQuery, state=None):
     client_data = get_client_by_id(int(call.data.replace('clients_rec_', '')))
 
@@ -1044,4 +1048,6 @@ def register_callbacks(dp: Dispatcher):
     dp.register_callback_query_handler(process_generate_pictures, lambda c: c.data == 'gen_pic',
                                        state='*')
     dp.register_callback_query_handler(process_edit_menu, lambda c: c.data == 'edit_menu',
+                                       state='*')
+    dp.register_callback_query_handler(process_back_menu, lambda c: c.data == 'back_menu',
                                        state='*')
