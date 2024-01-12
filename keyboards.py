@@ -13,6 +13,13 @@ def get_clients_keyboard():
     return keyboard
 
 
+def get_reply_bot():
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    btn_find_client = InlineKeyboardButton('Найти клиента', switch_inline_query_current_chat="")
+    keyboard.add(btn_find_client)
+    return keyboard
+
+
 def get_start_keyboard():
     keyboard = InlineKeyboardMarkup(row_width=1)
     btn_clients = InlineKeyboardButton('Список клиентов', callback_data='clients')
@@ -209,7 +216,7 @@ def get_clients_list_keyboard():
 def get_set_recommendations_keyboard():
     keyboard = InlineKeyboardMarkup(row_width=1)
     btn_set = InlineKeyboardButton('Задать рекомендации', callback_data='set_rec')
-    btn_back = InlineKeyboardButton('⬅️ Назад', callback_data='back')
+    btn_back = InlineKeyboardButton('⬅️ Назад', callback_data='back_start')
 
     keyboard.add(btn_set, btn_back)
 

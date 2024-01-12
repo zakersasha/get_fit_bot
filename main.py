@@ -39,7 +39,7 @@ async def main():
     register_callbacks(dp)
 
     @dp.inline_handler(state=ClientFind.user)
-    async def inline_query(query: types.InlineQuery, state: FSMContext, bot=getfit_menu_bot):
+    async def inline_query(query: types.InlineQuery, state: FSMContext):
         query_text = query.query.lower()
         results = []
 
@@ -59,7 +59,7 @@ async def main():
         await query.answer(results=results, cache_time=5)
 
     @dp.inline_handler(state=ClientFindMenu.user)
-    async def inline_query(query: types.InlineQuery, state: FSMContext, bot=getfit_menu_bot):
+    async def inline_query(query: types.InlineQuery, state: FSMContext):
         query_text = query.query.lower()
         results = []
 
@@ -79,7 +79,7 @@ async def main():
         await query.answer(results=results, cache_time=5)
 
     @dp.inline_handler(state=ClientFindRec.user)
-    async def inline_query(query: types.InlineQuery, state: FSMContext, bot=getfit_menu_bot):
+    async def inline_query(query: types.InlineQuery, state: FSMContext):
         query_text = query.query.lower()
         results = []
 

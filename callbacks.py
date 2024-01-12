@@ -3,20 +3,18 @@ from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
-from config import Config
 from db import get_protocol_by_id, get_recommendations_by_ids, save_new_client, get_client_by_id, delete_client_by_id, \
     get_recommendations, update_user_recommendations, setup_rec_data, update_client_by_id
-from keyboards import get_clients_keyboard, get_clients_list_keyboard, \
+from keyboards import get_clients_keyboard, \
     get_clients_settings_keyboard, get_remove_question_keyboard, get_start_keyboard, recommendations_keyboard_1, \
     recommendations_keyboard_2, recommendations_keyboard_3, recommendations_keyboard_4, recommendations_keyboard_5, \
-    recommendations_keyboard_6, get_clients_list_keyboard_rec, get_set_recommendations_keyboard, \
+    recommendations_keyboard_6, get_clients_list_keyboard_rec, \
     recommendation_edit_keyboard_1, recommendation_edit_keyboard_2, recommendation_edit_keyboard_3, \
     recommendation_edit_keyboard_4, recommendation_edit_keyboard_5, recommendation_edit_keyboard_6, \
-    get_clients_list_keyboard_menu, get_edit_list_keyboard, get_edit_food_protocols_keyboard, \
+    get_edit_list_keyboard, get_edit_food_protocols_keyboard, \
     edit_recommendation_keyboard_1, edit_recommendation_keyboard_2, edit_recommendation_keyboard_3, \
     edit_recommendation_keyboard_4, edit_recommendation_keyboard_5, edit_recommendation_keyboard_6, \
-    get_menu_settings_keyboard, get_back_keyboard
-from utils import make_gpt_request, execute_fusion_api
+    get_menu_settings_keyboard, get_back_keyboard, get_reply_bot
 
 
 class FormStates(StatesGroup):
@@ -84,14 +82,13 @@ async def process_start_callback_clients(call: types.CallbackQuery):
 
 
 async def process_start_callback_menu(call: types.CallbackQuery):
-    await call.message.edit_text('Выберите клиента, используя команду @getfit_menu_bot имя клиента')
     await ClientFindMenu.user.set()
+    await call.message.edit_text('Выберите клиента:', reply_markup=get_reply_bot())
 
 
 async def process_start_callback_recommendations(call: types.CallbackQuery):
-    await call.message.edit_text(
-        '💬 Формируем рекоммендации.\n\n Выберите клиента, используя команду @getfit_menu_bot имя клиента')
     await ClientFindRec.user.set()
+    await call.message.edit_text('💬 Формируем рекоммендации.\n Выберите клиента:', reply_markup=get_reply_bot())
 
 
 async def process_generate_pictures(call: types.CallbackQuery, state: FSMContext):
@@ -123,8 +120,8 @@ async def process_clients_callback_add(call: types.CallbackQuery):
 
 
 async def process_clients_callback_find(call: types.CallbackQuery):
-    await call.message.edit_text('Выберите клиента, используя команду @getfit_menu_bot имя клиента')
     await ClientFind.user.set()
+    await call.message.edit_text('Выберите клиента:', reply_markup=get_reply_bot())
 
 
 async def process_clients_find_callback(call: types.CallbackQuery, state: FSMContext):
