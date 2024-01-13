@@ -31,7 +31,7 @@ async def main():
     """Bot app creation."""
     logging.basicConfig(level=logging.INFO)
 
-    getfit_menu_bot = Bot(Config.TOKEN, parse_mode='HTML')
+    getfit_menu_bot = Bot(Config.TOKEN, parse_mode='HTML', timeout=600)
     storage = MemoryStorage()
     dp = Dispatcher(getfit_menu_bot, storage=storage)
 

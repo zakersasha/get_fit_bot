@@ -1,8 +1,12 @@
 """Keyboard manipulation callbacks"""
+import os
+import zipfile
+
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
+from config import Config
 from db import get_protocol_by_id, get_recommendations_by_ids, save_new_client, get_client_by_id, delete_client_by_id, \
     get_recommendations, update_user_recommendations, setup_rec_data, update_client_by_id
 from keyboards import get_clients_keyboard, \
@@ -15,6 +19,7 @@ from keyboards import get_clients_keyboard, \
     edit_recommendation_keyboard_1, edit_recommendation_keyboard_2, edit_recommendation_keyboard_3, \
     edit_recommendation_keyboard_4, edit_recommendation_keyboard_5, edit_recommendation_keyboard_6, \
     get_menu_settings_keyboard, get_back_keyboard, get_reply_bot
+from utils import execute_fusion_api
 
 
 class FormStates(StatesGroup):
@@ -92,9 +97,19 @@ async def process_start_callback_recommendations(call: types.CallbackQuery):
 
 
 async def process_generate_pictures(call: types.CallbackQuery, state: FSMContext):
-    # state_data = await state.get_data()
-    await call.message.edit_text("... Генерируем картинки по меню ... (в разработке)")
-    # execute_fusion_api(state_data['chosen_user']['full_name'], state_data['menu'])
+    state_data = await state.get_data()
+
+    await call.message.edit_text("... Генерируем картинки по меню ... ")
+    path_list = execute_fusion_api(state_data['chosen_user']['full_name'], state_data['menu'])
+    with zipfile.ZipFile(Config.ZIP_PATH, 'w') as zipf:
+        for path in path_list:
+            zipf.write(path, arcname=os.path.basename(path))
+
+    with open(Config.ZIP_PATH, 'rb') as file:
+        await call.message.edit_text("Архив с картинками готов!")
+        await call.message.answer_document(file)
+        os.remove(Config.ZIP_PATH)
+        os.remove(os.path.join(Config.IMAGES_PATH, state_data['chosen_user']['full_name']))
     await state.finish()
     await call.message.answer('Выберите действие:', reply_markup=get_start_keyboard())
 

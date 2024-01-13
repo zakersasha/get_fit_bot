@@ -136,14 +136,14 @@ async def choose_user(message: types.Message, state: FSMContext):
             else:
                 temp_msg = await message.answer('.. Формируем меню ..')
                 if client_data['allergic'] in Config.NO_ANSWER:
-                    msg, image_descriptions = make_gpt_request(client_data['food_protocol_id'], None)
+                    msg = make_gpt_request(client_data['food_protocol_id'], None)
                     await state.update_data(menu=msg)
                     await temp_msg.edit_text(msg)
                     await message.answer(f'Меню для <b>{client_data["full_name"]}</b> сформировано!')
                     await message.answer("Выберите действие: ", reply_markup=get_menu_settings_keyboard())
 
                 else:
-                    msg, image_descriptions = make_gpt_request(client_data['food_protocol_id'], client_data['allergic'])
+                    msg = make_gpt_request(client_data['food_protocol_id'], client_data['allergic'])
                     await state.update_data(menu=msg)
                     await temp_msg.edit_text(msg)
                     await message.answer(f'Меню для <b>{client_data["full_name"]}</b> сформировано!')

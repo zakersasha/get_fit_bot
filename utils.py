@@ -2,7 +2,6 @@ import base64
 import datetime
 import json
 import os
-import re
 import time
 import uuid
 
@@ -25,8 +24,8 @@ def make_gpt_request(food_protocol_id, allergic):
         "modelUri": f"gpt://{Config.CATALOG_ID}/yandexgpt-lite",
         "completionOptions": {
             "stream": False,
-            "temperature": 0.6,
-            "maxTokens": "8000"
+            "temperature": 0.3,
+            "maxTokens": "6000"
         },
         "messages": [
             {
@@ -38,7 +37,7 @@ def make_gpt_request(food_protocol_id, allergic):
                 "text": (
                         "Мне нужно составить меню на завтрак, обед и ужин на каждый день недели." +
                         (f"Нужно учесть аллергию клиента на {allergic}" if allergic is not None else "") +
-                        f"Вот список разрешенных продуктов: {allowed}. И список запрещенных продуктов:{not_allowed}. Пожалуйста, расписывайте каждое блюдо подробно, включая ингредиенты, напитки упоминать не нужно. "
+                        f"Вот список разрешенных продуктов: {allowed}. И список запрещенных продуктов:{not_allowed}. Пожалуйста, расписывайте каждое блюдо подробно, напитки упоминать не нужно. "
                 )
             },
             {
@@ -46,33 +45,32 @@ def make_gpt_request(food_protocol_id, allergic):
                 "text": (
                         "Понедельник.\n" +
                         "Завтрак: Омлет на растительном молоке с овощами и зеленью.\n" +
-                        "Ингредиенты: 3 яйца, 1 стакан растительного молока, 1/2 кабачка, 2 соцветия цветной капусты, 5 листьев зелени (укроп, петрушка, базилик).\n" +
-                        "Обед: [Тут описание обеда и ингридиентов для приготовления]\n" +
-                        "Ужин: [Тут описание ужина и ингридиентов для приготовления]\n\n"
+                        "Обед: [Тут описание блюда на обед]\n" +
+                        "Ужин: [Тут описание блюда на ужин]\n\n"
                         "Вторник.\n" +
-                        "Завтрак: [Тут описание завтрака и ингридиентов для приготовления]\n" +
-                        "Обед: [Тут описание обеда и ингридиентов для приготовления]\n" +
-                        "Ужин: [Тут описание ужина и ингридиентов для приготовления]\n\n"
+                        "Завтрак: [Тут описание блюда на завтрак]\n" +
+                        "Обед: [Тут описание блюда на обед]\n" +
+                        "Ужин: [Тут описание блюда на ужин]\n\n"
                         "Среда.\n" +
-                        "Завтрак: [Тут описание завтрака и ингридиентов для приготовления]\n" +
-                        "Обед: [Тут описание обеда и ингридиентов для приготовления]\n" +
-                        "Ужин: [Тут описание ужина и ингридиентов для приготовления]\n\n"
+                        "Завтрак: [Тут описание блюда на завтрак]\n" +
+                        "Обед: [Тут описание блюда на обед]\n" +
+                        "Ужин: [Тут описание блюда на ужин]\n\n"
                         "Четверг.\n" +
-                        "Завтрак: [Тут описание завтрака и ингридиентов для приготовления]\n" +
-                        "Обед: [Тут описание обеда и ингридиентов для приготовления]\n" +
-                        "Ужин: [Тут описание ужина и ингридиентов для приготовления]\n\n"
+                        "Завтрак: [Тут описание блюда на завтрак]\n" +
+                        "Обед: [Тут описание блюда на обед]\n" +
+                        "Ужин: [Тут описание блюда на ужин]\n\n"
                         "Пятница.\n" +
-                        "Завтрак: [Тут описание завтрака и ингридиентов для приготовления]\n" +
-                        "Обед: [Тут описание обеда и ингридиентов для приготовления]\n" +
-                        "Ужин: [Тут описание ужина и ингридиентов для приготовления]\n\n"
+                        "Завтрак: [Тут описание блюда на завтрак]\n" +
+                        "Обед: [Тут описание блюда на обед]\n" +
+                        "Ужин: [Тут описание блюда на ужин]\n\n"
                         "Суббота.\n" +
-                        "Завтрак: [Тут описание завтрака и ингридиентов для приготовления]\n" +
-                        "Обед: [Тут описание обеда и ингридиентов для приготовления]\n" +
-                        "Ужин: [Тут описание ужина и ингридиентов для приготовления]\n\n"
+                        "Завтрак: [Тут описание блюда на завтрак]\n" +
+                        "Обед: [Тут описание блюда на обед]\n" +
+                        "Ужин: [Тут описание блюда на ужин]\n\n"
                         "Воскресенье.\n" +
-                        "Завтрак: [Тут описание завтрака и ингридиентов для приготовления]\n" +
-                        "Обед: [Тут описание обеда и ингридиентов для приготовления]\n" +
-                        "Ужин: [Тут описание ужина и ингридиентов для приготовления]"
+                        "Завтрак: [Тут описание блюда на завтрак]\n" +
+                        "Обед: [Тут описание блюда на обед]\n" +
+                        "Ужин: [Тут описание блюда на ужин]"
                 )
             },
         ]
@@ -80,20 +78,22 @@ def make_gpt_request(food_protocol_id, allergic):
 
     response = requests.post(url, headers=headers, json=prompt)
     result = response.json()
-    image_descriptions = result['result']['alternatives'][0]['message']['text'].split("\n")
 
-    return result['result']['alternatives'][0]['message']['text'], image_descriptions
+    return result['result']['alternatives'][0]['message']['text']
 
 
 def execute_fusion_api(client_name, description):
     api = Text2ImageAPI('https://api-key.fusionbrain.ai/', Config.FUSION_KEY, Config.FUSION_SECRET)
     model_id = api.get_model()
     descriptions = api.prepare_descriptions(description)
+    image_paths = []
     if descriptions:
         for desc in descriptions:
             uuid = api.generate(desc, model_id)
             images = api.check_generation(uuid)
-            api.save_images(images, client_name)
+            path = api.save_images(images, client_name)
+            image_paths.append(path)
+    return image_paths
 
 
 class Text2ImageAPI:
@@ -148,40 +148,18 @@ class Text2ImageAPI:
             for idx, img_data in enumerate(images):
                 binary_data = base64.b64decode(img_data)
                 generated_uuid = uuid.uuid4()
-                os.makedirs(f'images/{client_name}/{cur_date}', exist_ok=True)
-                with open(f'images/{client_name}/{cur_date}/{generated_uuid}.jpg', 'wb') as file:
+                os.makedirs(os.path.join(Config.IMAGES_PATH, client_name, str(cur_date)), exist_ok=True)
+                img_path = os.path.join(Config.IMAGES_PATH, client_name, str(cur_date), str(generated_uuid)) + '.jpg'
+                with open(img_path, 'wb') as file:
                     file.write(binary_data)
+            return img_path
 
     def prepare_descriptions(self, description):
-        prepared_response = list(filter(None, description))
-        try:
-            monday_menu = prepared_response[prepared_response.index('Понедельник:') + 1]
-            tuesday_menu = prepared_response[prepared_response.index('Вторник:') + 1]
-            wednesday_menu = prepared_response[prepared_response.index('Среда:') + 1]
-            thursday_menu = prepared_response[prepared_response.index('Четверг:') + 1]
-            friday_menu = prepared_response[prepared_response.index('Пятница:') + 1]
-            saturday_menu = prepared_response[prepared_response.index('Суббота:') + 1]
-            sunday_menu = prepared_response[prepared_response.index('Воскресенье:') + 1]
-        except ValueError:
-            try:
-                monday_menu = prepared_response[prepared_response.index('Понедельник') + 1]
-                tuesday_menu = prepared_response[prepared_response.index('Вторник') + 1]
-                wednesday_menu = prepared_response[prepared_response.index('Среда') + 1]
-                thursday_menu = prepared_response[prepared_response.index('Четверг') + 1]
-                friday_menu = prepared_response[prepared_response.index('Пятница') + 1]
-                saturday_menu = prepared_response[prepared_response.index('Суббота') + 1]
-                sunday_menu = prepared_response[prepared_response.index('Воскресенье') + 1]
-            except ValueError:
-                return None
-        monday_meals = re.findall(r'\: (.*?)\.', monday_menu)
-        tuesday_meals = re.findall(r'\: (.*?)\.', tuesday_menu)
-        wednesday_meals = re.findall(r'\: (.*?)\.', wednesday_menu)
-        thursday_meals = re.findall(r'\: (.*?)\.', thursday_menu)
-        friday_meals = re.findall(r'\: (.*?)\.', friday_menu)
-        saturday_meals = re.findall(r'\: (.*?)\.', saturday_menu)
-        sunday_meals = re.findall(r'\: (.*?)\.', sunday_menu)
-
-        week_meals = monday_meals + tuesday_meals + wednesday_meals + \
-                     thursday_meals + friday_meals + saturday_meals + sunday_meals
-
-        return week_meals
+        filtered_list = [item for item in description.split('\n') if item != ""]
+        filtered_list = [item for item in filtered_list if
+                         not any(
+                             day in item for day in ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота',
+                                                     'Воскресенье'])]
+        filtered_list = [item for item in filtered_list if
+                         any(keyword in item for keyword in ['Завтрак', 'Обед', 'Ужин'])]
+        return filtered_list
