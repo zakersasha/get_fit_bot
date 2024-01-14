@@ -163,3 +163,12 @@ class Text2ImageAPI:
         filtered_list = [item for item in filtered_list if
                          any(keyword in item for keyword in ['Завтрак', 'Обед', 'Ужин'])]
         return filtered_list
+
+
+def remove_all_files_and_folders(path):
+    os.remove(Config.ZIP_PATH)
+    for root, dirs, files in os.walk(path, topdown=False):
+        for name in files:
+            os.remove(os.path.join(root, name))
+        for name in dirs:
+            os.rmdir(os.path.join(root, name))

@@ -19,7 +19,7 @@ from keyboards import get_clients_keyboard, \
     edit_recommendation_keyboard_1, edit_recommendation_keyboard_2, edit_recommendation_keyboard_3, \
     edit_recommendation_keyboard_4, edit_recommendation_keyboard_5, edit_recommendation_keyboard_6, \
     get_menu_settings_keyboard, get_back_keyboard, get_reply_bot
-from utils import execute_fusion_api
+from utils import execute_fusion_api, remove_all_files_and_folders
 
 
 class FormStates(StatesGroup):
@@ -98,7 +98,6 @@ async def process_start_callback_recommendations(call: types.CallbackQuery):
 
 async def process_generate_pictures(call: types.CallbackQuery, state: FSMContext):
     state_data = await state.get_data()
-
     await call.message.edit_text("... Генерируем картинки по меню ... ")
     path_list = execute_fusion_api(state_data['chosen_user']['full_name'], state_data['menu'])
     with zipfile.ZipFile(Config.ZIP_PATH, 'w') as zipf:
@@ -108,13 +107,14 @@ async def process_generate_pictures(call: types.CallbackQuery, state: FSMContext
     with open(Config.ZIP_PATH, 'rb') as file:
         await call.message.edit_text("Архив с картинками готов!")
         await call.message.answer_document(file)
-        os.remove(Config.ZIP_PATH)
-        os.remove(os.path.join(Config.IMAGES_PATH, state_data['chosen_user']['full_name']))
+        remove_all_files_and_folders(os.path.join(Config.IMAGES_PATH, state_data['chosen_user']['full_name']))
+
     await state.finish()
     await call.message.answer('Выберите действие:', reply_markup=get_start_keyboard())
 
 
-async def process_edit_menu(call: types.CallbackQuery):
+async def process_edit_menu(call: types.CallbackQuery, state: FSMContext):
+    await state.update_data(client='upd_menu')
     await call.message.edit_text("Введите обновленное меню", reply_markup=get_back_keyboard())
     await ClientMenuEdit.menu.set()
 
@@ -128,7 +128,8 @@ async def process_client_back(call: types.CallbackQuery, state: FSMContext):
     await call.message.answer('Выберите клиента:', reply_markup=get_clients_list_keyboard_rec())
 
 
-async def process_clients_callback_add(call: types.CallbackQuery):
+async def process_clients_callback_add(call: types.CallbackQuery, state: FSMContext):
+    await state.update_data(client='add_name')
     await call.message.edit_text('➕ 👤 Добавление нового клиента.')
     await call.message.answer('Введите ФИО:')
     await FormStates.NAME.set()
@@ -167,17 +168,20 @@ async def process_client_remove_callback(call: types.CallbackQuery):
                                  reply_markup=get_remove_question_keyboard())
 
 
-async def process_edit_name(call: types.CallbackQuery):
-    await call.message.edit_text('Введите ФИО:')
+async def process_edit_name(call: types.CallbackQuery, state: FSMContext):
+    await state.update_data(client='edit_name')
+    await call.message.edit_text('Введите новые ФИО:')
     await ClientFindChoice.name.set()
 
 
-async def process_edit_email(call: types.CallbackQuery):
-    await call.message.edit_text('Введите Email:')
+async def process_edit_email(call: types.CallbackQuery, state: FSMContext):
+    await state.update_data(client='edit_email')
+    await call.message.edit_text('Введите новый Email:')
     await ClientFindChoice.email.set()
 
 
-async def process_edit_allergic(call: types.CallbackQuery):
+async def process_edit_allergic(call: types.CallbackQuery, state: FSMContext):
+    await state.update_data(client='edit_allergic')
     await call.message.edit_text(
         'Введите продукты, которые не соответствуют вкусовым предпочтениям, вызывают аллергическую реакцию или '
         'непереносимость:')
@@ -185,7 +189,7 @@ async def process_edit_allergic(call: types.CallbackQuery):
 
 
 async def process_edit_food(call: types.CallbackQuery):
-    await call.message.edit_text('Выберите протокол питания:', reply_markup=get_edit_food_protocols_keyboard())
+    await call.message.edit_text('Выберите новый протокол питания:', reply_markup=get_edit_food_protocols_keyboard())
     await ClientFindChoice.food.set()
 
 
