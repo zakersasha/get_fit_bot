@@ -6,7 +6,6 @@ import os
 from typing import Optional
 
 import aiohttp
-import httpx
 import requests
 
 from config import Config
