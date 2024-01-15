@@ -144,12 +144,19 @@ class Text2ImageAPI:
 
     def save_images(self, images, client_name):
         cur_date = datetime.date.today()
+        day_counter = 1
+        dish_counter = 0
         if images:
             for idx, img_data in enumerate(images):
+                dish_counter += 1
+                if dish_counter == 4:
+                    dish_counter = 1
+                    day_counter += 1
+
                 binary_data = base64.b64decode(img_data)
-                generated_uuid = uuid.uuid4()
                 os.makedirs(os.path.join(Config.IMAGES_PATH, client_name, str(cur_date)), exist_ok=True)
-                img_path = os.path.join(Config.IMAGES_PATH, client_name, str(cur_date), str(generated_uuid)) + '.jpg'
+                img_path = os.path.join(Config.IMAGES_PATH, client_name, str(cur_date),
+                                        f"{day_counter}_{dish_counter}" + '.jpg')
                 with open(img_path, 'wb') as file:
                     file.write(binary_data)
             return img_path

@@ -18,7 +18,7 @@ from keyboards import get_clients_keyboard, \
     get_edit_list_keyboard, get_edit_food_protocols_keyboard, \
     edit_recommendation_keyboard_1, edit_recommendation_keyboard_2, edit_recommendation_keyboard_3, \
     edit_recommendation_keyboard_4, edit_recommendation_keyboard_5, edit_recommendation_keyboard_6, \
-    get_menu_settings_keyboard, get_back_keyboard, get_reply_bot
+    get_menu_settings_keyboard, get_back_keyboard, get_reply_bot, get_reply_bot_clients
 from utils import execute_fusion_api, remove_all_files_and_folders
 
 
@@ -137,7 +137,7 @@ async def process_clients_callback_add(call: types.CallbackQuery, state: FSMCont
 
 async def process_clients_callback_find(call: types.CallbackQuery):
     await ClientFind.user.set()
-    await call.message.edit_text('Выберите клиента:', reply_markup=get_reply_bot())
+    await call.message.edit_text('Выберите клиента:', reply_markup=get_reply_bot_clients())
 
 
 async def process_clients_find_callback(call: types.CallbackQuery, state: FSMContext):

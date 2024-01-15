@@ -16,7 +16,16 @@ def get_clients_keyboard():
 def get_reply_bot():
     keyboard = InlineKeyboardMarkup(row_width=1)
     btn_find_client = InlineKeyboardButton('Найти клиента', switch_inline_query_current_chat="")
-    keyboard.add(btn_find_client)
+    btn_back = InlineKeyboardButton('⬅️ Назад', callback_data='back_start')
+    keyboard.add(btn_find_client, btn_back)
+    return keyboard
+
+
+def get_reply_bot_clients():
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    btn_find_client = InlineKeyboardButton('Найти клиента', switch_inline_query_current_chat="")
+    btn_back = InlineKeyboardButton('⬅️ Назад', callback_data='back_clients')
+    keyboard.add(btn_find_client, btn_back)
     return keyboard
 
 
