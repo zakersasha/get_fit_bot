@@ -1,9 +1,9 @@
-import psycopg2
+import asyncpg
 
 from config import Config
 
 db_params = {
-    'dbname': Config.DB_NAME,
+    'database': Config.DB_NAME,
     'user': Config.DB_USERNAME,
     'password': Config.DB_PASSWORD,
     'host': Config.DB_HOST,
@@ -11,41 +11,37 @@ db_params = {
 }
 
 
-def get_food_titles():
-    connection = psycopg2.connect(**db_params)
-    cursor = connection.cursor()
+async def get_food_titles():
+    connection = await asyncpg.connect(**db_params)
 
     try:
-        cursor.execute("SELECT id, title FROM food_protocols")
-        food_data = cursor.fetchall()
-        food_dict = {data[0]: data[1] for data in food_data}
+        query = "SELECT id, title FROM food_protocols"
+        food_data = await connection.fetch(query)
 
+        food_dict = {data['id']: data['title'] for data in food_data}
         return food_dict
 
-    except (Exception, psycopg2.Error) as error:
+    except (Exception, asyncpg.PostgresError) as error:
         print("Ошибка при работе с PostgreSQL", error)
 
     finally:
         if connection:
-            cursor.close()
-            connection.close()
+            await connection.close()
 
 
-def get_recommendations(title_name):
-    connection = psycopg2.connect(**db_params)
-    cursor = connection.cursor()
+async def get_recommendations(title_name):
+    connection = await asyncpg.connect(**db_params)
 
     try:
-        cursor.execute("SELECT title, id, name FROM recommendations WHERE title = %s", (title_name,))
-
-        rows = cursor.fetchall()
+        query = "SELECT title, id, name FROM recommendations WHERE title = $1"
+        rows = await connection.fetch(query, title_name)
 
         result_dict = {}
 
         for row in rows:
-            title = row[0]
-            id = row[1]
-            name = row[2]
+            title = row['title']
+            id = row['id']
+            name = row['name']
 
             if title not in result_dict:
                 result_dict[title] = []
@@ -54,232 +50,194 @@ def get_recommendations(title_name):
 
         for key in result_dict:
             result_dict[key] = sorted(result_dict[key], key=lambda x: x['id'])
+
         return result_dict
-    except (Exception, psycopg2.Error) as error:
+    except (Exception, asyncpg.PostgresError) as error:
         print("Ошибка при работе с PostgreSQL", error)
 
     finally:
         if connection:
-            cursor.close()
-            connection.close()
+            await connection.close()
 
 
-def get_protocol_by_id(id):
-    connection = psycopg2.connect(**db_params)
-    cursor = connection.cursor()
+async def get_protocol_by_id(id):
+    connection = await asyncpg.connect(**db_params)
 
     try:
-        cursor.execute("SELECT title FROM food_protocols WHERE id = %s", (id,))
-        food_title = cursor.fetchone()
-        if food_title is not None:
-            return food_title[0]
-        else:
-            return None
+        query = "SELECT title FROM food_protocols WHERE id = $1"
+        food_title = await connection.fetchval(query, id)
+        return food_title
 
-    except (Exception, psycopg2.Error) as error:
+    except (Exception, asyncpg.PostgresError) as error:
         print("Ошибка при работе с PostgreSQL", error)
 
     finally:
         if connection:
-            cursor.close()
-            connection.close()
+            await connection.close()
 
 
-def get_recommendations_by_ids(ids):
-    connection = psycopg2.connect(**db_params)
-    cursor = connection.cursor()
+async def get_recommendations_by_ids(ids):
+    connection = await asyncpg.connect(**db_params)
 
     try:
-        placeholders = ', '.join(['%s'] * len(ids))
+        placeholders = ', '.join(['${}'.format(i + 1) for i in range(len(ids))])
         query = "SELECT name FROM recommendations WHERE id IN ({})".format(placeholders)
-
-        cursor.execute(query, ids)
-
-        recommendation_names = cursor.fetchall()
-
-        recommendation_names = [name[0] for name in recommendation_names]
-
+        recommendation_names = await connection.fetch(query, *ids)
+        recommendation_names = [name['name'] for name in recommendation_names]
         return recommendation_names
 
-    except (Exception, psycopg2.Error) as error:
+    except (Exception, asyncpg.PostgresError) as error:
         print("Ошибка при работе с PostgreSQL", error)
 
     finally:
         if connection:
-            cursor.close()
-            connection.close()
+            await connection.close()
 
 
-def save_new_client(name, email, food_protocol_id, food_protocol_name, allergic, recommendations, recommendations_ids):
-    connection = psycopg2.connect(**db_params)
-    cursor = connection.cursor()
+async def save_new_client(name, email, food_protocol_id, food_protocol_name, allergic, recommendations,
+                          recommendations_ids):
+    connection = await asyncpg.connect(**db_params)
+
     try:
-
-        query = "SELECT * FROM clients WHERE full_name = %s"
-        cursor.execute(query, (name,))
-        existing_client = cursor.fetchone()
+        query = "SELECT * FROM clients WHERE full_name = $1"
+        existing_client = await connection.fetchrow(query, name)
 
         if existing_client:
-            query = """
+            update_query = """
                     UPDATE clients
-                    SET food_protocol_id = %s, food_protocol_name = %s, allergic = %s, recommendations = %s, recommendations_ids = %s, email = %s
-                    WHERE full_name = %s
+                    SET food_protocol_id = $1, food_protocol_name = $2, allergic = $3, recommendations = $4, recommendations_ids = $5, email = $6
+                    WHERE full_name = $7
                     """
-            cursor.execute(query, (
-                food_protocol_id, food_protocol_name, str(allergic), recommendations, recommendations_ids,
-                str(email), name))
+            await connection.execute(update_query, food_protocol_id, food_protocol_name, str(allergic), recommendations,
+                                     recommendations_ids, str(email), name)
         else:
-            query = """
+            insert_query = """
                     INSERT INTO clients (full_name, email, food_protocol_id, food_protocol_name, allergic, recommendations, recommendations_ids)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7)
                     """
-            cursor.execute(query, (
-                name, str(email), food_protocol_id, food_protocol_name, str(allergic), recommendations,
-                recommendations_ids))
+            await connection.execute(insert_query, name, str(email), food_protocol_id, food_protocol_name,
+                                     str(allergic), recommendations, recommendations_ids)
 
-        connection.commit()
-
-    except (Exception, psycopg2.Error) as error:
+    except (Exception, asyncpg.PostgresError) as error:
         print("Error while connecting to PostgreSQL", error)
 
     finally:
         if connection:
-            cursor.close()
-            connection.close()
+            await connection.close()
 
 
-def get_clients_data():
-    connection = psycopg2.connect(**db_params)
-    cursor = connection.cursor()
+async def get_clients_data():
+    connection = await asyncpg.connect(**db_params)
 
     try:
-        cursor.execute("SELECT * FROM clients")
+        query = "SELECT * FROM clients"
+        rows = await connection.fetch(query)
 
-        rows = cursor.fetchall()
-
-        columns = [col[0] for col in cursor.description]
-
-        list_of_dicts = []
-        for row in rows:
-            dict_row = dict(zip(columns, row))
-            list_of_dicts.append(dict_row)
-
+        list_of_dicts = [dict(row) for row in rows]
         return list_of_dicts
 
-    except (Exception, psycopg2.Error) as error:
+    except (Exception, asyncpg.PostgresError) as error:
         print("Ошибка при работе с PostgreSQL", error)
 
     finally:
         if connection:
-            cursor.close()
-            connection.close()
+            await connection.close()
 
 
-def get_client_by_id(id):
-    connection = psycopg2.connect(**db_params)
-    cursor = connection.cursor()
+async def get_client_by_id(id):
+    connection = await asyncpg.connect(**db_params)
 
     try:
-        cursor.execute("SELECT * FROM clients WHERE id = %s", (id,))
-        client_data = cursor.fetchone()
-        columns = [desc[0] for desc in cursor.description]
-        client_dict = {columns[i]: client_data[i] for i in range(len(columns))}
-        return client_dict
+        query = "SELECT * FROM clients WHERE id = $1"
+        client_data = await connection.fetchrow(query, id)
 
+        if client_data:
+            client_dict = dict(client_data.items())
+            return client_dict
+        else:
+            return None
 
-    except (Exception, psycopg2.Error) as error:
+    except (Exception, asyncpg.PostgresError) as error:
         print("Ошибка при работе с PostgreSQL", error)
 
     finally:
         if connection:
-            cursor.close()
-            connection.close()
+            await connection.close()
 
 
-def get_client_by_name(name):
-    connection = psycopg2.connect(**db_params)
-    cursor = connection.cursor()
+async def get_client_by_name(name):
+    connection = await asyncpg.connect(**db_params)
 
     try:
-        cursor.execute("SELECT * FROM clients WHERE full_name = %s", (name,))
-        client_data = cursor.fetchone()
-        columns = [desc[0] for desc in cursor.description]
-        client_dict = {columns[i]: client_data[i] for i in range(len(columns))}
-        return client_dict
+        query = "SELECT * FROM clients WHERE full_name = $1"
+        client_data = await connection.fetchrow(query, name)
 
+        if client_data:
+            client_dict = dict(client_data.items())
+            return client_dict
+        else:
+            return None
 
-    except (Exception, psycopg2.Error) as error:
+    except (Exception, asyncpg.PostgresError) as error:
         print("Ошибка при работе с PostgreSQL", error)
 
     finally:
         if connection:
-            cursor.close()
-            connection.close()
+            await connection.close()
 
 
-def delete_client_by_id(id):
-    connection = psycopg2.connect(**db_params)
-    cursor = connection.cursor()
+async def delete_client_by_id(id):
+    connection = await asyncpg.connect(**db_params)
 
     try:
-        cur = connection.cursor()
+        query = "DELETE FROM clients WHERE id = $1"
+        await connection.execute(query, id)
 
-        cur.execute("""
-                DELETE FROM clients
-                WHERE id = %s
-            """, (id,))
-
-        connection.commit()
-
-    except (Exception, psycopg2.Error) as error:
+    except (Exception, asyncpg.PostgresError) as error:
         print("Ошибка при работе с PostgreSQL", error)
 
     finally:
         if connection:
-            cursor.close()
-            connection.close()
+            await connection.close()
 
 
-def update_user_recommendations(user_id, recommendations_ids, recommendations):
-    connection = psycopg2.connect(**db_params)
-    cursor = connection.cursor()
+async def update_user_recommendations(user_id, recommendations_ids, recommendations):
+    connection = await asyncpg.connect(**db_params)
 
     try:
         sql = """
-                UPDATE clients
-                SET recommendations_ids = %s, recommendations = %s
-                WHERE id = %s
-            """
-        cursor.execute(sql, (recommendations_ids, recommendations, user_id))
-        connection.commit()
+            UPDATE clients
+            SET recommendations_ids = $1, recommendations = $2
+            WHERE id = $3
+        """
+        await connection.execute(sql, recommendations_ids, recommendations, user_id)
 
-    except (Exception, psycopg2.Error) as error:
+    except (Exception, asyncpg.PostgresError) as error:
         print("Ошибка при работе с PostgreSQL", error)
 
     finally:
         if connection:
-            cursor.close()
-            connection.close()
+            await connection.close()
 
 
-def update_client_by_id(client_data):
-    connection = psycopg2.connect(**db_params)
-    cursor = connection.cursor()
+async def update_client_by_id(client_data):
+    connection = await asyncpg.connect(**db_params)
 
     try:
         sql_query = """
-                UPDATE clients
-                SET
-                    full_name = %s,
-                    email = %s,
-                    food_protocol_id = %s,
-                    allergic = %s,
-                    recommendations = %s,
-                    food_protocol_name = %s,
-                    recommendations_ids = %s
-                WHERE id = %s
-            """
-        cursor.execute(sql_query, (
+            UPDATE clients
+            SET
+                full_name = $1,
+                email = $2,
+                food_protocol_id = $3,
+                allergic = $4,
+                recommendations = $5,
+                food_protocol_name = $6,
+                recommendations_ids = $7
+            WHERE id = $8
+        """
+        await connection.execute(
+            sql_query,
             client_data['full_name'],
             client_data['email'],
             client_data['food_protocol_id'],
@@ -288,48 +246,41 @@ def update_client_by_id(client_data):
             client_data['food_protocol_name'],
             client_data['recommendations_ids'],
             client_data['id']
-        ))
-        connection.commit()
+        )
 
-    except (Exception, psycopg2.Error) as error:
+    except (Exception, asyncpg.PostgresError) as error:
         print("Ошибка при работе с PostgreSQL", error)
 
     finally:
         if connection:
-            cursor.close()
-            connection.close()
+            await connection.close()
 
 
-def get_food_protocols_by_id(food_id):
-    connection = psycopg2.connect(**db_params)
-    cursor = connection.cursor()
+async def get_food_protocols_by_id(food_id):
+    connection = await asyncpg.connect(**db_params)
+
     try:
-        query = "SELECT allowed, not_allowed FROM food_protocols WHERE id = %s"
+        query = "SELECT allowed, not_allowed FROM food_protocols WHERE id = $1"
 
-        cursor.execute(query, (food_id,))
-        result = cursor.fetchone()
-        columns = ('allowed', 'not_allowed')
-        result_dict = dict(zip(columns, result))
+        result = await connection.fetchrow(query, food_id)
+        result_dict = dict(result)
         return result_dict
 
-    except (Exception, psycopg2.Error) as error:
+    except (Exception, asyncpg.PostgresError) as error:
         print("Ошибка при работе с PostgreSQL", error)
 
     finally:
         if connection:
-            cursor.close()
-            connection.close()
+            await connection.close()
 
 
-def setup_rec_data(names):
-    connection = psycopg2.connect(**db_params)
-    cursor = connection.cursor()
+async def setup_rec_data(names):
+    connection = await asyncpg.connect(**db_params)
+
     try:
-        query = "SELECT name, title FROM recommendations WHERE name IN %s"
+        query = "SELECT name, title FROM recommendations WHERE name = ANY($1)"
 
-        cursor.execute(query, (tuple(names),))
-
-        results = cursor.fetchall()
+        results = await connection.fetch(query, names)
 
         formatted_string = ""
         headers_set = set()
@@ -343,10 +294,9 @@ def setup_rec_data(names):
                 headers_set.add(content)
 
         return formatted_string
-    except (Exception, psycopg2.Error) as error:
+    except (Exception, asyncpg.PostgresError) as error:
         print("Ошибка при работе с PostgreSQL", error)
 
     finally:
         if connection:
-            cursor.close()
-            connection.close()
+            await connection.close()

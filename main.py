@@ -43,7 +43,7 @@ async def main():
         query_text = query.query.lower()
         results = []
 
-        users = get_clients_data()
+        users = await get_clients_data()
 
         for user in users:
             if query_text in user['full_name'].lower():
@@ -63,7 +63,7 @@ async def main():
         query_text = query.query.lower()
         results = []
 
-        users = get_clients_data()
+        users = await get_clients_data()
 
         for user in users:
             if query_text in user['full_name'].lower():
@@ -83,7 +83,7 @@ async def main():
         query_text = query.query.lower()
         results = []
 
-        users = get_clients_data()
+        users = await get_clients_data()
 
         for user in users:
             if query_text in user['full_name'].lower():

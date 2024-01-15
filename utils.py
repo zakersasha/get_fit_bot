@@ -1,18 +1,20 @@
+import asyncio
 import base64
 import datetime
 import json
 import os
-import time
-import uuid
+from typing import Optional
 
+import aiohttp
+import httpx
 import requests
 
 from config import Config
 from db import get_food_protocols_by_id
 
 
-def make_gpt_request(food_protocol_id, allergic):
-    food_data = get_food_protocols_by_id(food_protocol_id)
+async def make_gpt_request(food_protocol_id, allergic: Optional[str]):
+    food_data = await get_food_protocols_by_id(food_protocol_id)
     url = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
     headers = {
         "Content-Type": "application/json",
@@ -76,16 +78,17 @@ def make_gpt_request(food_protocol_id, allergic):
         ]
     }
 
-    response = requests.post(url, headers=headers, json=prompt)
-    result = response.json()
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, headers=headers, json=prompt) as response:
+            result = await response.json()
 
     return result['result']['alternatives'][0]['message']['text']
 
 
-def execute_fusion_api(client_name, description):
+async def execute_fusion_api(client_name, description):
     api = Text2ImageAPI('https://api-key.fusionbrain.ai/', Config.FUSION_KEY, Config.FUSION_SECRET)
-    model_id = api.get_model()
-    descriptions = api.prepare_descriptions(description)
+    model_id = await api.get_model()
+    descriptions = await api.prepare_descriptions(description)
     image_paths = []
     day_counter = 1
     dish_counter = 0
@@ -95,30 +98,28 @@ def execute_fusion_api(client_name, description):
             if dish_counter == 4:
                 dish_counter = 1
                 day_counter += 1
-            uuid = api.generate(desc, model_id)
-            images = api.check_generation(uuid)
-            path = api.save_images(images, client_name, f"{day_counter}_{dish_counter}")
+            uuid = await api.generate(desc, model_id)
+            images = await api.check_generation(uuid)
+            path = await api.save_images(images, client_name, f"{day_counter}_{dish_counter}")
             image_paths.append(path)
     return image_paths
 
 
 class Text2ImageAPI:
-
     def __init__(self, url, api_key, secret_key):
         self.URL = url
-
         self.AUTH_HEADERS = {
             'X-Key': f'Key {api_key}',
             'X-Secret': f'Secret {secret_key}',
         }
 
-    def get_model(self):
-        response = requests.get(self.URL + 'key/api/v1/models',
-                                headers=self.AUTH_HEADERS)
-        data = response.json()
-        return data[0]['id']
+    async def get_model(self):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(self.URL + 'key/api/v1/models', headers=self.AUTH_HEADERS) as response:
+                data = await response.json()
+                return data[0]['id']
 
-    def generate(self, prompt, model, images=1, width=1024, height=1024):
+    async def generate(self, prompt, model, images=1, width=1024, height=1024):
         params = {
             "type": "GENERATE",
             "numImages": images,
@@ -138,31 +139,29 @@ class Text2ImageAPI:
         data = response.json()
         return data['uuid']
 
-    def check_generation(self, request_id, attempts=10, delay=10):
+    async def check_generation(self, request_id, attempts=10, delay=10):
         while attempts > 0:
-            response = requests.get(self.URL + 'key/api/v1/text2image/status/' +
-                                    request_id, headers=self.AUTH_HEADERS)
-            data = response.json()
-            if data['status'] == 'DONE':
-                return data['images']
+            async with aiohttp.ClientSession() as session:
+                async with session.get(self.URL + 'key/api/v1/text2image/status/' + request_id,
+                                       headers=self.AUTH_HEADERS) as response:
+                    data = await response.json()
+                    if data['status'] == 'DONE':
+                        return data['images']
             attempts -= 1
-            time.sleep(delay)
+            await asyncio.sleep(delay)
 
-    def save_images(self, images, client_name, img_name):
+    async def save_images(self, images, client_name, img_name):
         cur_date = datetime.date.today()
         if images:
             for idx, img_data in enumerate(images):
-
-
                 binary_data = base64.b64decode(img_data)
                 os.makedirs(os.path.join(Config.IMAGES_PATH, client_name, str(cur_date)), exist_ok=True)
-                img_path = os.path.join(Config.IMAGES_PATH, client_name, str(cur_date),
-                                        img_name + '.jpg')
+                img_path = os.path.join(Config.IMAGES_PATH, client_name, str(cur_date), img_name + '.jpg')
                 with open(img_path, 'wb') as file:
                     file.write(binary_data)
             return img_path
 
-    def prepare_descriptions(self, description):
+    async def prepare_descriptions(self, description):
         filtered_list = [item for item in description.split('\n') if item != ""]
         filtered_list = [item for item in filtered_list if
                          not any(
@@ -173,7 +172,7 @@ class Text2ImageAPI:
         return filtered_list
 
 
-def remove_all_files_and_folders(path):
+async def remove_all_files_and_folders(path):
     os.remove(Config.ZIP_PATH)
     for root, dirs, files in os.walk(path, topdown=False):
         for name in files:

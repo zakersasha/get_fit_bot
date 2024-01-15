@@ -3,7 +3,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from db import get_food_titles, get_recommendations, get_clients_data
 
 
-def get_clients_keyboard():
+async def get_clients_keyboard():
     """Notification settings keyboard creation."""
     keyboard = InlineKeyboardMarkup(row_width=1)
     btn_add_client = InlineKeyboardButton('Добавить нового клиента', callback_data='add_client')
@@ -13,7 +13,7 @@ def get_clients_keyboard():
     return keyboard
 
 
-def get_reply_bot():
+async def get_reply_bot():
     keyboard = InlineKeyboardMarkup(row_width=1)
     btn_find_client = InlineKeyboardButton('Найти клиента', switch_inline_query_current_chat="")
     btn_back = InlineKeyboardButton('⬅️ Назад', callback_data='back_start')
@@ -21,7 +21,7 @@ def get_reply_bot():
     return keyboard
 
 
-def get_reply_bot_clients():
+async def get_reply_bot_clients():
     keyboard = InlineKeyboardMarkup(row_width=1)
     btn_find_client = InlineKeyboardButton('Найти клиента', switch_inline_query_current_chat="")
     btn_back = InlineKeyboardButton('⬅️ Назад', callback_data='back_clients')
@@ -29,7 +29,7 @@ def get_reply_bot_clients():
     return keyboard
 
 
-def get_start_keyboard():
+async def get_start_keyboard():
     keyboard = InlineKeyboardMarkup(row_width=1)
     btn_clients = InlineKeyboardButton('Список клиентов', callback_data='clients')
     btn_menu = InlineKeyboardButton('Сформировать меню', callback_data='menu')
@@ -40,25 +40,25 @@ def get_start_keyboard():
     return keyboard
 
 
-def get_food_protocols_keyboard():
+async def get_food_protocols_keyboard():
     keyboard = InlineKeyboardMarkup()
-    protocols = get_food_titles()
+    protocols = await get_food_titles()
     for protocol_id, protocol_title in protocols.items():
         keyboard.add(InlineKeyboardButton(protocol_title, callback_data=f'protocol_{protocol_id}'))
     return keyboard
 
 
-def get_edit_food_protocols_keyboard():
+async def get_edit_food_protocols_keyboard():
     keyboard = InlineKeyboardMarkup()
-    protocols = get_food_titles()
+    protocols = await get_food_titles()
     for protocol_id, protocol_title in protocols.items():
         keyboard.add(InlineKeyboardButton(protocol_title, callback_data=f'edit_protocol_{protocol_id}'))
     return keyboard
 
 
-def recommendations_keyboard_1(user_data):
+async def recommendations_keyboard_1(user_data):
     keyboard = InlineKeyboardMarkup(row_width=3)
-    recommendations = get_recommendations('Работа со стрессом')
+    recommendations = await get_recommendations('Работа со стрессом')
 
     on = '✅ '
     off = '❌ '
@@ -82,9 +82,9 @@ def recommendations_keyboard_1(user_data):
     return keyboard
 
 
-def recommendations_keyboard_2(user_data):
+async def recommendations_keyboard_2(user_data):
     keyboard = InlineKeyboardMarkup(row_width=3)
-    recommendations = get_recommendations('Витамины')
+    recommendations = await get_recommendations('Витамины')
 
     on = '✅ '
     off = '❌ '
@@ -108,9 +108,9 @@ def recommendations_keyboard_2(user_data):
     return keyboard
 
 
-def recommendations_keyboard_3(user_data):
+async def recommendations_keyboard_3(user_data):
     keyboard = InlineKeyboardMarkup(row_width=3)
-    recommendations = get_recommendations('Режим дня и сон')
+    recommendations = await get_recommendations('Режим дня и сон')
 
     on = '✅ '
     off = '❌ '
@@ -134,9 +134,9 @@ def recommendations_keyboard_3(user_data):
     return keyboard
 
 
-def recommendations_keyboard_4(user_data):
+async def recommendations_keyboard_4(user_data):
     keyboard = InlineKeyboardMarkup(row_width=3)
-    recommendations = get_recommendations('Активность')
+    recommendations = await get_recommendations('Активность')
 
     on = '✅ '
     off = '❌ '
@@ -160,9 +160,9 @@ def recommendations_keyboard_4(user_data):
     return keyboard
 
 
-def recommendations_keyboard_5(user_data):
+async def recommendations_keyboard_5(user_data):
     keyboard = InlineKeyboardMarkup(row_width=3)
-    recommendations = get_recommendations('Слизистые')
+    recommendations = await get_recommendations('Слизистые')
 
     on = '✅ '
     off = '❌ '
@@ -186,9 +186,9 @@ def recommendations_keyboard_5(user_data):
     return keyboard
 
 
-def recommendations_keyboard_6(user_data):
+async def recommendations_keyboard_6(user_data):
     keyboard = InlineKeyboardMarkup(row_width=3)
-    recommendations = get_recommendations('Кислотность и желчеотток')
+    recommendations = await get_recommendations('Кислотность и желчеотток')
 
     on = '✅ '
     off = '❌ '
@@ -212,9 +212,9 @@ def recommendations_keyboard_6(user_data):
     return keyboard
 
 
-def get_clients_list_keyboard():
+async def get_clients_list_keyboard():
     keyboard = InlineKeyboardMarkup()
-    clients = get_clients_data()
+    clients = await get_clients_data()
     for client in clients:
         keyboard.add(InlineKeyboardButton(client['full_name'], callback_data=f'client_{str(client["id"])}'))
     btn_back = InlineKeyboardButton('⬅️ Назад', callback_data='back_clients')
@@ -222,7 +222,7 @@ def get_clients_list_keyboard():
     return keyboard
 
 
-def get_set_recommendations_keyboard():
+async def get_set_recommendations_keyboard():
     keyboard = InlineKeyboardMarkup(row_width=1)
     btn_set = InlineKeyboardButton('Задать рекомендации', callback_data='set_rec')
     btn_back = InlineKeyboardButton('⬅️ Назад', callback_data='back_start')
@@ -232,7 +232,7 @@ def get_set_recommendations_keyboard():
     return keyboard
 
 
-def get_menu_settings_keyboard():
+async def get_menu_settings_keyboard():
     keyboard = InlineKeyboardMarkup(row_width=1)
     btn_gen = InlineKeyboardButton('Cгенерировать фото по меню', callback_data='gen_pic')
     btn_edit_menu = InlineKeyboardButton('Редактировать меню', callback_data='edit_menu')
@@ -243,7 +243,7 @@ def get_menu_settings_keyboard():
     return keyboard
 
 
-def get_back_keyboard():
+async def get_back_keyboard():
     keyboard = InlineKeyboardMarkup(row_width=1)
     btn_back = InlineKeyboardButton('⬅️ Назад', callback_data='back_menu')
 
@@ -252,9 +252,9 @@ def get_back_keyboard():
     return keyboard
 
 
-def get_clients_list_keyboard_rec():
+async def get_clients_list_keyboard_rec():
     keyboard = InlineKeyboardMarkup()
-    clients = get_clients_data()
+    clients = await get_clients_data()
     for client in clients:
         keyboard.add(InlineKeyboardButton(client['full_name'], callback_data=f'clients_rec_{str(client["id"])}'))
     btn_back = InlineKeyboardButton('⬅️ Назад', callback_data='back_start')
@@ -262,9 +262,9 @@ def get_clients_list_keyboard_rec():
     return keyboard
 
 
-def get_clients_list_keyboard_menu():
+async def get_clients_list_keyboard_menu():
     keyboard = InlineKeyboardMarkup()
-    clients = get_clients_data()
+    clients = await get_clients_data()
     for client in clients:
         keyboard.add(InlineKeyboardButton(client['full_name'], callback_data=f'menu_clients_{str(client["id"])}'))
     btn_back = InlineKeyboardButton('⬅️ Назад', callback_data='back_start')
@@ -272,7 +272,7 @@ def get_clients_list_keyboard_menu():
     return keyboard
 
 
-def get_clients_settings_keyboard():
+async def get_clients_settings_keyboard():
     keyboard = InlineKeyboardMarkup(row_width=1)
     btn_edit = InlineKeyboardButton('Редактировать данные клиента', callback_data='edit_client')
     btn_delete = InlineKeyboardButton('Удалить клиента', callback_data='remove_client')
@@ -283,7 +283,7 @@ def get_clients_settings_keyboard():
     return keyboard
 
 
-def get_edit_list_keyboard():
+async def get_edit_list_keyboard():
     keyboard = InlineKeyboardMarkup(row_width=1)
     btn_edit_name = InlineKeyboardButton('ФИО', callback_data='edit_name')
     btn_edit_mail = InlineKeyboardButton('Email', callback_data='edit_mail')
@@ -297,7 +297,7 @@ def get_edit_list_keyboard():
     return keyboard
 
 
-def get_remove_question_keyboard():
+async def get_remove_question_keyboard():
     keyboard = InlineKeyboardMarkup(row_width=1)
     btn_edit = InlineKeyboardButton('Да', callback_data='removal_yes')
     btn_delete = InlineKeyboardButton('Нет', callback_data='removal_no')
@@ -307,9 +307,9 @@ def get_remove_question_keyboard():
     return keyboard
 
 
-def recommendation_edit_keyboard_1(user_data):
+async def recommendation_edit_keyboard_1(user_data):
     keyboard = InlineKeyboardMarkup(row_width=3)
-    recommendations = get_recommendations('Работа со стрессом')
+    recommendations = await get_recommendations('Работа со стрессом')
 
     on = '✅ '
     off = '❌ '
@@ -333,9 +333,9 @@ def recommendation_edit_keyboard_1(user_data):
     return keyboard
 
 
-def edit_recommendation_keyboard_1(user_data):
+async def edit_recommendation_keyboard_1(user_data):
     keyboard = InlineKeyboardMarkup(row_width=3)
-    recommendations = get_recommendations('Работа со стрессом')
+    recommendations = await get_recommendations('Работа со стрессом')
 
     on = '✅ '
     off = '❌ '
@@ -359,9 +359,9 @@ def edit_recommendation_keyboard_1(user_data):
     return keyboard
 
 
-def recommendation_edit_keyboard_2(user_data):
+async def recommendation_edit_keyboard_2(user_data):
     keyboard = InlineKeyboardMarkup(row_width=3)
-    recommendations = get_recommendations('Витамины')
+    recommendations = await get_recommendations('Витамины')
 
     on = '✅ '
     off = '❌ '
@@ -385,9 +385,9 @@ def recommendation_edit_keyboard_2(user_data):
     return keyboard
 
 
-def edit_recommendation_keyboard_2(user_data):
+async def edit_recommendation_keyboard_2(user_data):
     keyboard = InlineKeyboardMarkup(row_width=3)
-    recommendations = get_recommendations('Витамины')
+    recommendations = await get_recommendations('Витамины')
 
     on = '✅ '
     off = '❌ '
@@ -411,9 +411,9 @@ def edit_recommendation_keyboard_2(user_data):
     return keyboard
 
 
-def recommendation_edit_keyboard_3(user_data):
+async def recommendation_edit_keyboard_3(user_data):
     keyboard = InlineKeyboardMarkup(row_width=3)
-    recommendations = get_recommendations('Режим дня и сон')
+    recommendations = await get_recommendations('Режим дня и сон')
 
     on = '✅ '
     off = '❌ '
@@ -437,9 +437,9 @@ def recommendation_edit_keyboard_3(user_data):
     return keyboard
 
 
-def edit_recommendation_keyboard_3(user_data):
+async def edit_recommendation_keyboard_3(user_data):
     keyboard = InlineKeyboardMarkup(row_width=3)
-    recommendations = get_recommendations('Режим дня и сон')
+    recommendations = await get_recommendations('Режим дня и сон')
 
     on = '✅ '
     off = '❌ '
@@ -463,9 +463,9 @@ def edit_recommendation_keyboard_3(user_data):
     return keyboard
 
 
-def recommendation_edit_keyboard_4(user_data):
+async def recommendation_edit_keyboard_4(user_data):
     keyboard = InlineKeyboardMarkup(row_width=3)
-    recommendations = get_recommendations('Активность')
+    recommendations = await get_recommendations('Активность')
 
     on = '✅ '
     off = '❌ '
@@ -489,9 +489,9 @@ def recommendation_edit_keyboard_4(user_data):
     return keyboard
 
 
-def edit_recommendation_keyboard_4(user_data):
+async def edit_recommendation_keyboard_4(user_data):
     keyboard = InlineKeyboardMarkup(row_width=3)
-    recommendations = get_recommendations('Активность')
+    recommendations = await get_recommendations('Активность')
 
     on = '✅ '
     off = '❌ '
@@ -515,9 +515,9 @@ def edit_recommendation_keyboard_4(user_data):
     return keyboard
 
 
-def recommendation_edit_keyboard_5(user_data):
+async def recommendation_edit_keyboard_5(user_data):
     keyboard = InlineKeyboardMarkup(row_width=3)
-    recommendations = get_recommendations('Слизистые')
+    recommendations = await get_recommendations('Слизистые')
 
     on = '✅ '
     off = '❌ '
@@ -541,9 +541,9 @@ def recommendation_edit_keyboard_5(user_data):
     return keyboard
 
 
-def edit_recommendation_keyboard_5(user_data):
+async def edit_recommendation_keyboard_5(user_data):
     keyboard = InlineKeyboardMarkup(row_width=3)
-    recommendations = get_recommendations('Слизистые')
+    recommendations = await get_recommendations('Слизистые')
 
     on = '✅ '
     off = '❌ '
@@ -567,9 +567,9 @@ def edit_recommendation_keyboard_5(user_data):
     return keyboard
 
 
-def recommendation_edit_keyboard_6(user_data):
+async def recommendation_edit_keyboard_6(user_data):
     keyboard = InlineKeyboardMarkup(row_width=3)
-    recommendations = get_recommendations('Кислотность и желчеотток')
+    recommendations = await get_recommendations('Кислотность и желчеотток')
 
     on = '✅ '
     off = '❌ '
@@ -593,9 +593,9 @@ def recommendation_edit_keyboard_6(user_data):
     return keyboard
 
 
-def edit_recommendation_keyboard_6(user_data):
+async def edit_recommendation_keyboard_6(user_data):
     keyboard = InlineKeyboardMarkup(row_width=3)
-    recommendations = get_recommendations('Кислотность и желчеотток')
+    recommendations = await get_recommendations('Кислотность и желчеотток')
 
     on = '✅ '
     off = '❌ '
