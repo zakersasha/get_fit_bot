@@ -87,11 +87,17 @@ def execute_fusion_api(client_name, description):
     model_id = api.get_model()
     descriptions = api.prepare_descriptions(description)
     image_paths = []
+    day_counter = 1
+    dish_counter = 0
     if descriptions:
         for desc in descriptions:
+            dish_counter += 1
+            if dish_counter == 4:
+                dish_counter = 1
+                day_counter += 1
             uuid = api.generate(desc, model_id)
             images = api.check_generation(uuid)
-            path = api.save_images(images, client_name)
+            path = api.save_images(images, client_name, f"{day_counter}_{dish_counter}")
             image_paths.append(path)
     return image_paths
 
@@ -142,21 +148,16 @@ class Text2ImageAPI:
             attempts -= 1
             time.sleep(delay)
 
-    def save_images(self, images, client_name):
+    def save_images(self, images, client_name, img_name):
         cur_date = datetime.date.today()
-        day_counter = 1
-        dish_counter = 0
         if images:
             for idx, img_data in enumerate(images):
-                dish_counter += 1
-                if dish_counter == 4:
-                    dish_counter = 1
-                    day_counter += 1
+
 
                 binary_data = base64.b64decode(img_data)
                 os.makedirs(os.path.join(Config.IMAGES_PATH, client_name, str(cur_date)), exist_ok=True)
                 img_path = os.path.join(Config.IMAGES_PATH, client_name, str(cur_date),
-                                        f"{day_counter}_{dish_counter}" + '.jpg')
+                                        img_name + '.jpg')
                 with open(img_path, 'wb') as file:
                     file.write(binary_data)
             return img_path
