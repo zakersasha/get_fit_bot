@@ -34,8 +34,9 @@ async def get_start_keyboard():
     btn_clients = InlineKeyboardButton('Список клиентов', callback_data='clients')
     btn_menu = InlineKeyboardButton('Сформировать меню', callback_data='menu')
     btn_recommendations = InlineKeyboardButton('Сформировать рекомендации', callback_data='recommendations')
+    btn_receipt = InlineKeyboardButton('Сформировать рецепт к блюду', callback_data='receipt')
 
-    keyboard.add(btn_clients, btn_menu, btn_recommendations)
+    keyboard.add(btn_clients, btn_menu, btn_recommendations, btn_receipt)
 
     return keyboard
 

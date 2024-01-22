@@ -10,7 +10,7 @@ from db import get_recommendations, setup_rec_data, update_client_by_id, get_cli
 from keyboards import get_start_keyboard, get_clients_keyboard, get_food_protocols_keyboard, \
     recommendations_keyboard_1, recommendations_keyboard_2, get_menu_settings_keyboard, get_clients_settings_keyboard, \
     get_set_recommendations_keyboard
-from utils import make_gpt_request
+from utils import make_gpt_request, get_dish_receipt
 
 
 async def send_welcome_keyboard(message: Message, state: FSMContext):
@@ -187,6 +187,12 @@ async def choose_user(message: types.Message, state: FSMContext):
         await message.answer(text="Выберите рекомендации по <b>Работе со стрессом</b>:\n\n" + msg,
                              reply_markup=await recommendations_keyboard_1([]))
         await FormStates.RECOMMENDATION_1.set()
+    elif state_data['client'] == 'make_receipt':
+        temp_msg = await message.answer('Формируем рецепт ...')
+        receipt = await get_dish_receipt(message.text)
+        await temp_msg.edit_text(receipt)
+        await state.finish()
+        await message.answer('Выберите действие:', reply_markup=await get_start_keyboard())
 
 
 def register_commands(dp: Dispatcher):

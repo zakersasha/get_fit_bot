@@ -47,6 +47,10 @@ class ClientFindRec(StatesGroup):
     user = State()
 
 
+class Receipt(StatesGroup):
+    dish_desc = State()
+
+
 class RecStates(StatesGroup):
     REC_1 = State()
     REC_2 = State()
@@ -94,6 +98,13 @@ async def process_start_callback_menu(call: types.CallbackQuery):
 async def process_start_callback_recommendations(call: types.CallbackQuery):
     await ClientFindRec.user.set()
     await call.message.edit_text('💬 Формируем рекоммендации.\n Выберите клиента:', reply_markup=await get_reply_bot())
+
+
+async def process_receipt(call: types.CallbackQuery, state: FSMContext):
+    await state.update_data(client='make_receipt')
+    await call.message.edit_text("Пришлите описание / название блюда, для которого необходимо сформировать рецепт:",
+                                 reply_markup=await get_back_keyboard())
+    await Receipt.dish_desc.set()
 
 
 async def process_generate_pictures(call: types.CallbackQuery, state: FSMContext):
@@ -189,7 +200,8 @@ async def process_edit_allergic(call: types.CallbackQuery, state: FSMContext):
 
 
 async def process_edit_food(call: types.CallbackQuery):
-    await call.message.edit_text('Выберите новый протокол питания:', reply_markup=await get_edit_food_protocols_keyboard())
+    await call.message.edit_text('Выберите новый протокол питания:',
+                                 reply_markup=await get_edit_food_protocols_keyboard())
     await ClientFindChoice.food.set()
 
 
@@ -1030,4 +1042,7 @@ def register_callbacks(dp: Dispatcher):
     dp.register_callback_query_handler(process_edit_menu, lambda c: c.data == 'edit_menu',
                                        state='*')
     dp.register_callback_query_handler(process_back_menu, lambda c: c.data == 'back_menu',
+                                       state='*')
+    # Receipt generation
+    dp.register_callback_query_handler(process_receipt, lambda c: c.data == 'receipt',
                                        state='*')

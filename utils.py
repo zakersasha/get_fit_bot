@@ -12,6 +12,35 @@ from config import Config
 from db import get_food_protocols_by_id
 
 
+async def get_dish_receipt(dish_description: str):
+    url = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Api-Key {Config.API_SECRET}"
+    }
+    prompt = {
+        "modelUri": f"gpt://{Config.CATALOG_ID}/yandexgpt-lite",
+        "completionOptions": {
+            "stream": False,
+            "temperature": 0.3,
+            "maxTokens": "2000"
+        },
+        "messages": [
+            {
+                "role": "system",
+                "text": f"Ты повар, который формирует подробные рецепты блюд. Нужно составить подробный рецепт для "
+                        f"приготовления {dish_description} с указанием ингридиентов. "
+            },
+        ]
+    }
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, headers=headers, json=prompt) as response:
+            result = await response.json()
+
+    return result['result']['alternatives'][0]['message']['text']
+
+
 async def make_gpt_request(food_protocol_id, allergic: Optional[str]):
     food_data = await get_food_protocols_by_id(food_protocol_id)
     url = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
@@ -38,7 +67,7 @@ async def make_gpt_request(food_protocol_id, allergic: Optional[str]):
             {
                 "role": "user",
                 "text": (
-                        "Пожалуйста, расписывайте каждое блюдо подробно, напитки упоминать не нужно. "
+                    "Пожалуйста, расписывайте каждое блюдо подробно, напитки упоминать не нужно. "
                 )
             },
             {
