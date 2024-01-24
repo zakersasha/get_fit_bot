@@ -246,7 +246,7 @@ async def get_menu_settings_keyboard():
 
 async def get_back_keyboard():
     keyboard = InlineKeyboardMarkup(row_width=1)
-    btn_back = InlineKeyboardButton('⬅️ Назад', callback_data='back_menu')
+    btn_back = InlineKeyboardButton('⬅️ Назад', callback_data='back_start')
 
     keyboard.add(btn_back)
 
