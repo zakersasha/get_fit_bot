@@ -102,8 +102,10 @@ async def process_start_callback_recommendations(call: types.CallbackQuery):
 
 async def process_receipt(call: types.CallbackQuery, state: FSMContext):
     await state.update_data(client='make_receipt')
-    await call.message.edit_text("Пришлите описание / название блюда, для которого необходимо сформировать рецепт:",
-                                 reply_markup=await get_back_keyboard())
+    await call.message.edit_text(
+        "Пришлите описание / название блюд, для которых сформировать рецепт в следующем формате:\n- Блюдо 1\n- Блюдо "
+        "2\n- Блюдо N",
+        reply_markup=await get_back_keyboard())
     await Receipt.dish_desc.set()
 
 
